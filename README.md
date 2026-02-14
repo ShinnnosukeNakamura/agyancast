@@ -127,7 +127,7 @@ mall_name,company,stop_id
 ## デプロイ/運用
 
 ### デプロイ先
-- http://agyancast-dev-web.s3-website-ap-northeast-1.amazonaws.com
+- [http://agyancast-dev-web.s3-website-ap-northeast-1.amazonaws.com/](http://agyancast-dev-web.s3-website-ap-northeast-1.amazonaws.com/)
 
 ### CDK
 - S3（data/web）
@@ -155,11 +155,11 @@ python3 /Users/nakamurashinnosuke/Documents/GitHub/agyancast/athena/run_athena_s
 
 ## 主要ファイル
 
-- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/agyancast_spec.md`
-- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/frontend_handoff.md`
-- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lib/agyancast-data-stack.ts`
-- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lambda/transform.ts`
-- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lambda_py/daily_delay_mart/handler.py`
+/Users/nakamurashinnosuke/Documents/GitHub/agyancast/agyancast_spec.md
+/Users/nakamurashinnosuke/Documents/GitHub/agyancast/frontend_handoff.md
+/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lib/agyancast-data-stack.ts
+/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lambda/transform.ts
+/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lambda_py/daily_delay_mart/handler.py
 
 ---
 
