@@ -4,13 +4,16 @@
 
 CREATE DATABASE IF NOT EXISTS agyancast;
 
+DROP TABLE IF EXISTS agyancast.daily_delay_hourly;
+
 CREATE EXTERNAL TABLE IF NOT EXISTS agyancast.daily_delay_hourly (
+  hour string,
   mall_name string,
   median_delay_sec bigint,
   sample_count bigint,
   generated_at string
 )
-PARTITIONED BY (dt string, hour string)
+PARTITIONED BY (dt string)
 STORED AS PARQUET
 LOCATION 's3://agyancast-dev-data/silver/mart/daily_delay/'
 TBLPROPERTIES (

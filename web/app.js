@@ -33,6 +33,7 @@ const fallbackPlaces = {
     { id: "アミュプラザくまもと", name: "アミュプラザくまもと", x: 32.7, y: 35.53 },
     { id: "イオンモール熊本", name: "イオンモール熊本", x: 67.5, y: 73.84 },
     { id: "サクラマチ", name: "サクラマチ", x: 41.89, y: 28.17 },
+    { id: "サンリブシティくまなん", name: "サンリブシティくまなん", x: 60.5, y: 62.0 },
     { id: "鶴屋百貨店", name: "鶴屋百貨店", x: 47.77, y: 26.56 },
   ],
 };
@@ -44,6 +45,7 @@ const fallbackLatest = {
     "アミュプラザくまもと": "unknown",
     "イオンモール熊本": "unknown",
     "サクラマチ": "unknown",
+    "サンリブシティくまなん": "unknown",
     "鶴屋百貨店": "unknown",
   },
 };
@@ -285,9 +287,9 @@ const render = async () => {
 
   const layoutSide = (list, side, rect) => {
     if (!list.length) return;
-    const pad = 36;
+    const pad = 28;
     const available = Math.max(0, rect.height - pad * 2);
-    const minGap = 130;
+    const minGap = rect.height < 650 ? 110 : 130;
     let gap = 0;
     if (list.length > 1) {
       gap = minGap;
@@ -321,8 +323,8 @@ const render = async () => {
       const side = bubble.dataset.side === "left" ? "left" : "right";
       const targetX =
         side === "left"
-          ? bubbleRect.right - rect.left - 8
-          : bubbleRect.left - rect.left + 8;
+          ? bubbleRect.right - rect.left - 6
+          : bubbleRect.left - rect.left + 6;
       const targetY = bubbleRect.top - rect.top + bubbleRect.height * 0.55;
 
       const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -335,7 +337,7 @@ const render = async () => {
       const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       dot.setAttribute("cx", anchorX);
       dot.setAttribute("cy", anchorY);
-      dot.setAttribute("r", "5");
+      dot.setAttribute("r", "4");
       pointerLayer.appendChild(dot);
     });
   };

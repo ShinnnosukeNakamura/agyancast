@@ -37,15 +37,24 @@ body {
   padding: 0 20px 32px;
 }
 
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .hero {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 28px;
-  border-radius: 18px 18px 12px 12px;
+  padding: 16px 20px;
+  border-radius: 16px;
   color: white;
   background: linear-gradient(135deg, var(--blue-900), var(--blue-700) 55%, var(--blue-500));
-  box-shadow: 0 12px 30px rgba(6, 35, 82, 0.35);
+  box-shadow: 0 10px 24px rgba(6, 35, 82, 0.25);
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
 }
 
 .hero-title {
@@ -79,9 +88,9 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.18);
   padding: 10px 16px;
-  border-radius: 999px;
+  border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
@@ -94,16 +103,18 @@ body {
   background: white;
   margin-top: 18px;
   padding: 16px;
-  border-radius: 14px;
-  box-shadow: 0 18px 40px rgba(42, 38, 24, 0.2);
-  border: 3px solid #d6ccb9;
+  border-radius: 20px;
+  box-shadow: 0 18px 40px rgba(42, 38, 24, 0.18);
+  border: 1px solid rgba(200, 195, 185, 0.6);
+  width: 100%;
+  max-width: 760px;
 }
 
 .map {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: 10px;
+  aspect-ratio: 4 / 5;
+  border-radius: 16px;
   overflow: hidden;
   background: var(--paper);
 }
@@ -115,11 +126,22 @@ body {
   background-size: cover;
   background-position: center;
   filter: saturate(1.05) contrast(1.05);
+  z-index: 0;
 }
 
 .map-overlay {
   position: absolute;
   inset: 0;
+  z-index: 2;
+}
+
+.map::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(90deg, rgba(248, 246, 241, 0.9) 0%, rgba(248, 246, 241, 0) 26%, rgba(248, 246, 241, 0) 74%, rgba(248, 246, 241, 0.9) 100%);
+  pointer-events: none;
 }
 
 .pointer-layer {
@@ -129,15 +151,15 @@ body {
 }
 
 .pointer-layer line {
-  stroke: rgba(34, 34, 34, 0.8);
-  stroke-width: 2.5;
+  stroke: rgba(17, 24, 39, 0.6);
+  stroke-width: 2.2;
   stroke-linecap: round;
 }
 
 .pointer-layer circle {
   fill: #1c1c1c;
   stroke: #ffffff;
-  stroke-width: 2;
+  stroke-width: 1.5;
 }
 
 .bubble-layer {
@@ -149,35 +171,38 @@ body {
   position: absolute;
   top: 6%;
   right: 5%;
-  background: rgba(202, 218, 188, 0.92);
+  background: rgba(235, 244, 232, 0.92);
   color: #2f4a1f;
   font-weight: 700;
-  padding: 8px 14px;
+  padding: 8px 12px;
   border-radius: 999px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(111, 140, 90, 0.6);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(111, 140, 90, 0.4);
+  z-index: 3;
 }
 
 .bubble {
   position: absolute;
-  width: 240px;
+  width: clamp(180px, 38vw, 240px);
   padding: 12px 14px 12px 12px;
   border-radius: 14px;
   color: #1e1e1e;
   display: grid;
   grid-template-columns: 62px 1fr;
   gap: 10px;
-  box-shadow: 0 10px 22px var(--shadow);
-  border: 2px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.12);
+  border: 1px solid rgba(15, 23, 42, 0.08);
   transform: translate(0, 0);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
 }
 
 .bubble.side-left {
-  left: 24px;
+  left: 16px;
 }
 
 .bubble.side-right {
-  right: 24px;
+  right: 16px;
 }
 
 .bubble::after {
@@ -205,8 +230,13 @@ body {
 
 .bubble .status {
   margin-top: 6px;
-  font-weight: 900;
-  font-size: 18px;
+  font-weight: 800;
+  font-size: 14px;
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.06);
 }
 
 .bubble .delay {
@@ -220,36 +250,44 @@ body {
   width: 58px;
   height: 58px;
   align-self: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  border: 2px solid rgba(15, 23, 42, 0.08);
 }
 
 .bubble[data-status="low"] {
-  background: linear-gradient(180deg, #e7f8ec 0%, #c1e7d1 100%);
   --bubble-accent: #1db455;
-  border-color: rgba(20, 120, 55, 0.35);
 }
 
 .bubble[data-status="medium"] {
-  background: linear-gradient(180deg, #fff4d4 0%, #f6d88b 100%);
   --bubble-accent: #f1c842;
-  border-color: rgba(170, 130, 35, 0.35);
 }
 
 .bubble[data-status="high"] {
-  background: linear-gradient(180deg, #ffe0db 0%, #f2a096 100%);
   --bubble-accent: #e64a3b;
-  border-color: rgba(170, 50, 40, 0.35);
 }
 
 .bubble[data-status="very_high"] {
-  background: linear-gradient(180deg, #f5d7d3 0%, #d47267 100%);
   --bubble-accent: var(--very-high);
-  border-color: rgba(120, 20, 15, 0.4);
 }
 
 .bubble[data-status="unknown"] {
-  background: linear-gradient(180deg, #f0f1f3 0%, #d4d7db 100%);
   --bubble-accent: var(--unknown);
-  border-color: rgba(110, 115, 120, 0.4);
+}
+
+.bubble::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 5px;
+  border-radius: 6px;
+  background: var(--bubble-accent, #cbd5e1);
+}
+
+.bubble .status {
+  color: var(--bubble-accent, #4b5563);
 }
 
 .legend {
@@ -259,9 +297,11 @@ body {
   gap: 18px;
   padding: 12px 16px;
   background: rgba(255, 255, 255, 0.75);
-  border-radius: 999px;
-  border: 2px solid #d9cfbd;
-  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  border: 1px solid rgba(200, 195, 185, 0.6);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 760px;
 }
 
 .legend-item {
@@ -307,10 +347,12 @@ body {
 .trend {
   margin-top: 18px;
   padding: 16px;
-  border-radius: 14px;
+  border-radius: 20px;
   background: #ffffff;
-  border: 2px solid #d9cfbd;
-  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(200, 195, 185, 0.6);
+  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.06);
+  width: 100%;
+  max-width: 760px;
 }
 
 .trend.hidden {
@@ -414,19 +456,25 @@ body {
 
 @media (max-width: 760px) {
   .map {
-    aspect-ratio: 4 / 3;
-  }
-
-  .bubble-layer {
-    display: none;
+    aspect-ratio: 3 / 4;
   }
 
   .pointer-layer line {
-    display: none;
+    stroke-width: 2;
   }
 
-  .mobile-list {
-    display: grid;
+  .bubble {
+    width: clamp(160px, 56vw, 220px);
+    grid-template-columns: 54px 1fr;
+  }
+
+  .bubble img {
+    width: 50px;
+    height: 50px;
+  }
+
+  .bubble .delay {
+    display: none;
   }
 
   .trend {
@@ -462,24 +510,8 @@ body {
     padding: 12px;
   }
 
-  .bubble {
-    width: 210px;
-    grid-template-columns: 54px 1fr;
-  }
-
-  .bubble img {
-    width: 50px;
-    height: 50px;
-  }
-
   .legend {
     flex-direction: column;
     border-radius: 18px;
-  }
-}
-
-@media (max-width: 680px) {
-  .bubble {
-    transform: translate(-50%, -110%) scale(0.9);
   }
 }

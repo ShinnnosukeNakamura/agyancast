@@ -156,15 +156,16 @@ def build_hourly_stats(by_hour):
     return stats
 
 
-def write_parquet(dt: str, hour: str, rows):
+def write_parquet_day(dt: str, rows):
     if not rows:
         return
-    prefix = f"{SILVER_PREFIX}mart/daily_delay/dt={dt}/hour={hour}/"
+    prefix = f"{SILVER_PREFIX}mart/daily_delay/dt={dt}/"
     clear_prefix(prefix)
     table = pa.Table.from_pylist(
         rows,
         schema=pa.schema(
             [
+                ("hour", pa.string()),
                 ("mall_name", pa.string()),
                 ("median_delay_sec", pa.int64()),
                 ("sample_count", pa.int64()),
@@ -174,7 +175,7 @@ def write_parquet(dt: str, hour: str, rows):
     )
     buf = BytesIO()
     pq.write_table(table, buf, compression="snappy")
-    key = f"{prefix}part-{dt}-{hour}.parquet"
+    key = f"{prefix}part-{dt}.parquet"
     s3.put_object(
         Bucket=DATA_BUCKET,
         Key=key,
@@ -213,18 +214,19 @@ def handler(event, context):
 
     generated_at = datetime.now(tz=JST).isoformat()
 
+    rows = []
     for hour, malls in stats.items():
-        rows = []
         for mall, values in malls.items():
             rows.append(
                 {
+                    "hour": hour,
                     "mall_name": mall,
                     "median_delay_sec": values["median_delay_sec"],
                     "sample_count": values["sample_count"],
                     "generated_at": generated_at,
                 }
             )
-        write_parquet(dt, hour, rows)
+    write_parquet_day(dt, rows)
 
     if WEB_BUCKET:
         daily_json = build_daily_json(dt, mall_names, stats)

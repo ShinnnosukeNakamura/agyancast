@@ -82,8 +82,14 @@ export class AgyancastDataStack extends cdk.Stack {
 
     dataBucket.grantReadWrite(ingestFn);
 
+    // EventBridge cron is evaluated in UTC. 05:00-23:50 JST => 20:00-14:50 UTC.
+    const activeHoursJstSchedule = events.Schedule.cron({
+      minute: '0/10',
+      hour: '0-14,20-23',
+    });
+
     new events.Rule(this, 'IngestScheduleRule', {
-      schedule: events.Schedule.rate(cdk.Duration.minutes(10)),
+      schedule: activeHoursJstSchedule,
       targets: [new targets.LambdaFunction(ingestFn)],
     });
 
@@ -110,7 +116,7 @@ export class AgyancastDataStack extends cdk.Stack {
     webBucket.grantReadWrite(transformFn);
 
     new events.Rule(this, 'TransformScheduleRule', {
-      schedule: events.Schedule.rate(cdk.Duration.minutes(10)),
+      schedule: activeHoursJstSchedule,
       targets: [new targets.LambdaFunction(transformFn)],
     });
 
@@ -177,7 +183,7 @@ export class AgyancastDataStack extends cdk.Stack {
     webBucket.grantReadWrite(dailyDelayFn);
 
     new events.Rule(this, 'DailyDelayMartScheduleRule', {
-      schedule: events.Schedule.rate(cdk.Duration.minutes(10)),
+      schedule: activeHoursJstSchedule,
       targets: [new targets.LambdaFunction(dailyDelayFn)],
     });
 

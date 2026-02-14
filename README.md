@@ -22,7 +22,7 @@
 
 ### 2. DWH（Silverマート）
 - Bronze(JSONL) → **Silver(Parquet)** で毎時集計
-- Hive形式パーティション (`dt=YYYY-MM-DD/hour=HH`)
+- 1日1ファイル（`dt=YYYY-MM-DD` パーティション）
 - Athenaから即クエリ可能
 
 ### 3. フロント（地図 + 混雑表示）
@@ -73,8 +73,7 @@ s3://<data-bucket>/silver/latest_detail.json
 ```
 s3://<data-bucket>/silver/mart/daily_delay/
   dt=YYYY-MM-DD/
-    hour=HH/
-      part-YYYY-MM-DD-HH.parquet
+    part-YYYY-MM-DD.parquet
 ```
 
 ### Web (フロント用)
@@ -126,6 +125,9 @@ mall_name,company,stop_id
 ---
 
 ## デプロイ/運用
+
+### デプロイ先
+- http://agyancast-dev-web.s3-website-ap-northeast-1.amazonaws.com
 
 ### CDK
 - S3（data/web）

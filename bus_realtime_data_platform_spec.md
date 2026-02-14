@@ -267,8 +267,8 @@ Lambda のメモリ/実行時間制限には留意する。
 
 -   CDK 言語: TypeScript
 -   取得ジョブ: Lambda
--   Raw 取得: 10分間隔
--   Bronze / Silver 更新: 10分間隔
+-   Raw 取得: 10分間隔（JST 05:00〜23:50 のみ稼働・00:00〜05:00は停止）
+-   Bronze / Silver 更新: 10分間隔（JST 05:00〜23:50 のみ稼働・00:00〜05:00は停止）
 -   Silver（時系列）: 予測フェーズまで作らない
 -   Silver（最新スナップショット）: Bronze から直接抽出し CTAS で保存
 -   event_date: GTFS-RT の timestamp を JST に丸めた日付
