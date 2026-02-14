@@ -65,6 +65,101 @@ const fetchJson = async (url, fallback) => {
   }
 };
 
+const chartPalette = [
+  "#1db455",
+  "#f1c842",
+  "#e64a3b",
+  "#0b4aa3",
+  "#8f1f14",
+  "#1664c8",
+  "#2f87e0",
+  "#6a7076",
+];
+
+const buildHourLabels = (startHour, endHour) => {
+  const labels = [];
+  for (let h = startHour; h <= endHour; h += 1) {
+    labels.push(String(h).padStart(2, "0"));
+  }
+  return labels;
+};
+
+const buildSeriesForHours = (labels, hours, values) => {
+  const map = new Map();
+  if (Array.isArray(hours) && Array.isArray(values)) {
+    hours.forEach((h, idx) => {
+      map.set(String(h).padStart(2, "0"), values[idx]);
+    });
+  }
+  return labels.map((label) => (label === "24" ? null : map.get(label) ?? null));
+};
+
+const renderTrend = async () => {
+  const trend = document.getElementById("trend");
+  const trendMeta = document.getElementById("trend-meta");
+  const canvas = document.getElementById("daily-delay-chart");
+  if (!trend || !canvas) return;
+
+  const daily = await fetchJson("data/daily_delay.json", null);
+  if (!daily || !daily.series || !daily.hours || typeof Chart === "undefined") {
+    trend.classList.add("hidden");
+    return;
+  }
+
+  if (trendMeta) {
+    trendMeta.textContent = `${daily.date ?? "--"} (${daily.timezone ?? "JST"}) / 05-24時 / 遅延中央値(分)`;
+  }
+
+  const labels = buildHourLabels(5, 24);
+  const datasets = Object.entries(daily.series).map(([mall, values], idx) => {
+    const color = chartPalette[idx % chartPalette.length];
+    const seriesValues = buildSeriesForHours(labels, daily.hours, values);
+    return {
+      label: mall,
+      data: seriesValues,
+      borderColor: color,
+      backgroundColor: color,
+      tension: 0.3,
+      spanGaps: false,
+      pointRadius: 2,
+      pointHoverRadius: 4,
+    };
+  });
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: "line",
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "nearest", intersect: false },
+      plugins: {
+        legend: { position: "bottom" },
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              const value = context.parsed.y;
+              if (value === null || value === undefined) return `${context.dataset.label}: -`;
+              return `${context.dataset.label}: ${value}分`;
+            },
+          },
+        },
+      },
+      scales: {
+        y: {
+          title: { display: true, text: "遅延(分)" },
+          beginAtZero: true,
+        },
+        x: {
+          title: { display: true, text: "時間帯" },
+          ticks: { maxTicksLimit: 12 },
+        },
+      },
+    },
+  });
+};
 
 const formatDateTime = (iso) => {
   if (!iso) return "----";
@@ -247,6 +342,8 @@ const render = async () => {
 
   requestAnimationFrame(layoutAndDraw);
   window.addEventListener("resize", layoutAndDraw, { passive: true });
+
+  await renderTrend();
 };
 
 render().catch((err) => {

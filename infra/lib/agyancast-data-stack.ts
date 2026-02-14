@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
+import { execSync } from 'child_process';
 import { Construct } from 'constructs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
@@ -111,6 +112,73 @@ export class AgyancastDataStack extends cdk.Stack {
     new events.Rule(this, 'TransformScheduleRule', {
       schedule: events.Schedule.rate(cdk.Duration.minutes(10)),
       targets: [new targets.LambdaFunction(transformFn)],
+    });
+
+    const dailyDelayPath = path.join(__dirname, '..', 'lambda_py', 'daily_delay_mart');
+    const dailyDelayFn = new lambda.Function(this, 'DailyDelayMartFunction', {
+      runtime: lambda.Runtime.PYTHON_3_11,
+      handler: 'handler.handler',
+      code: lambda.Code.fromAsset(dailyDelayPath, {
+        bundling: {
+          image: lambda.Runtime.PYTHON_3_11.bundlingImage,
+          local: {
+            tryBundle(outputDir: string) {
+              execSync(
+                [
+                  'python3 -m pip install',
+                  '--platform manylinux2014_x86_64',
+                  '--implementation cp',
+                  '--python-version 311',
+                  '--abi cp311',
+                  '--only-binary=:all:',
+                  `-r ${path.join(dailyDelayPath, 'requirements.txt')}`,
+                  `-t ${outputDir}`,
+                ].join(' '),
+                { stdio: 'inherit' }
+              );
+              fs.copyFileSync(
+                path.join(dailyDelayPath, 'handler.py'),
+                path.join(outputDir, 'handler.py')
+              );
+              return true;
+            },
+          },
+          command: [
+            'bash',
+            '-c',
+            [
+              'pip install',
+              '--platform manylinux2014_x86_64',
+              '--implementation cp',
+              '--python-version 311',
+              '--abi cp311',
+              '--only-binary=:all:',
+              '-r /asset-input/requirements.txt',
+              '-t /asset-output',
+              '&& cp /asset-input/handler.py /asset-output/handler.py',
+            ].join(' '),
+          ],
+        },
+      }),
+      timeout: cdk.Duration.minutes(10),
+      memorySize: 1024,
+      environment: {
+        DATA_BUCKET: dataBucket.bucketName,
+        BRONZE_PREFIX: 'bronze/',
+        SILVER_PREFIX: 'silver/',
+        MASTER_SPOTS_KEY: 'master/spots.csv',
+        WEB_BUCKET: webBucket.bucketName,
+        TIMEZONE: 'Asia/Tokyo',
+        ENV: envName,
+      },
+    });
+
+    dataBucket.grantReadWrite(dailyDelayFn);
+    webBucket.grantReadWrite(dailyDelayFn);
+
+    new events.Rule(this, 'DailyDelayMartScheduleRule', {
+      schedule: events.Schedule.rate(cdk.Duration.minutes(10)),
+      targets: [new targets.LambdaFunction(dailyDelayFn)],
     });
 
     new cdk.CfnOutput(this, 'DataBucketName', {

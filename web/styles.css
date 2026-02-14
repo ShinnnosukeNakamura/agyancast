@@ -338,6 +338,13 @@ body {
 .trend-chart {
   position: relative;
   height: 240px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.trend-scroll {
+  min-width: 720px;
+  height: 100%;
 }
 
 .trend-chart canvas {
@@ -433,6 +440,10 @@ body {
 
   .trend-chart {
     height: 200px;
+  }
+
+  .trend-scroll {
+    min-width: 640px;
   }
 
   .legend {

@@ -139,3 +139,33 @@ http://localhost:8000
 - `latest.json` / `latest_detail.json` は既存表示で利用中。
 - グラフ表示は **当日分のみ** でOK。
 - フロントは **静的HTML/JS** のまま維持する方針。
+
+## バックエンド修正依頼（必要）
+フロント側の現在仕様に合わせるため、以下の対応が必要です。
+
+### 1. 日次グラフ用 `daily_delay.json` の生成・配置
+- 配置先: `s3://<web-bucket>/data/daily_delay.json`
+- Content-Type: `application/json`
+- Cache-Control: `no-cache`（または短め TTL）
+- 30分〜60分間隔で更新（EventBridge + Lambda など）
+
+#### データ形式
+```json
+{
+  "date": "YYYY-MM-DD",
+  "timezone": "Asia/Tokyo",
+  "hours": ["00","01",..."23"],
+  "series": {
+    "ゆめタウン浜線": [0.8, 1.2, null, ...]
+  }
+}
+```
+
+### 2. グラフ表示は 05:00〜24:00 に固定
+- フロントは `hours` を 05〜24 に再構成するが、**バックエンド側でも 05〜24 に合わせた出力にするのが理想**。
+- `24` はダミーとして `null` を許容（24時ちょうどの値が無ければ `null`）。
+
+### 3. モール名（キー）の整合性
+- `daily_delay.json` の `series` キーは `places.json` の `name` と一致させること。
+- `spots.csv` に入っている `mall_name` がそのまま表示名として使われる。
+- 例: `ゆめタウン浜線`, `アミュプラザくまもと`, `サクラマチ`, `鶴屋百貨店`, `イオンモール熊本`
