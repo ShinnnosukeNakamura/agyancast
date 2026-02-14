@@ -143,23 +143,23 @@ mall_name,company,stop_id
 
 SQLファイル:
 ```
-/Users/nakamurashinnosuke/Documents/GitHub/agyancast/athena/create_daily_delay_table.sql
+athena/create_daily_delay_table.sql
 ```
 
 実行スクリプト:
 ```
-python3 /Users/nakamurashinnosuke/Documents/GitHub/agyancast/athena/run_athena_sql.py --sample-date 2026-02-14
+python3 athena/run_athena_sql.py --sample-date 2026-02-14
 ```
 
 ---
 
 ## 主要ファイル
 
-/Users/nakamurashinnosuke/Documents/GitHub/agyancast/agyancast_spec.md
-/Users/nakamurashinnosuke/Documents/GitHub/agyancast/frontend_handoff.md
-/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lib/agyancast-data-stack.ts
-/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lambda/transform.ts
-/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lambda_py/daily_delay_mart/handler.py
+agyancast_spec.md
+frontend_handoff.md
+infra/lib/agyancast-data-stack.ts
+infra/lambda/transform.ts
+infra/lambda_py/daily_delay_mart/handler.py
 
 ---
 
