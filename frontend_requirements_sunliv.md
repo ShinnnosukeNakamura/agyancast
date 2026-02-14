@@ -64,18 +64,18 @@
 1. 最新データをS3から取得
 ```bash
 aws s3 cp s3://agyancast-dev-web/data/places.json \
-  /Users/nakamurashinnosuke/Documents/GitHub/agyancast/web/data/places.json
+  web/data/places.json
 aws s3 cp s3://agyancast-dev-web/data/latest.json \
-  /Users/nakamurashinnosuke/Documents/GitHub/agyancast/web/data/latest.json
+  web/data/latest.json
 aws s3 cp s3://agyancast-dev-web/data/latest_detail.json \
-  /Users/nakamurashinnosuke/Documents/GitHub/agyancast/web/data/latest_detail.json
+  web/data/latest_detail.json
 aws s3 cp s3://agyancast-dev-web/data/daily_delay.json \
-  /Users/nakamurashinnosuke/Documents/GitHub/agyancast/web/data/daily_delay.json
+  web/data/daily_delay.json
 ```
 
 2. ローカルサーバ起動
 ```bash
-cd /Users/nakamurashinnosuke/Documents/GitHub/agyancast/web
+cd web
 python3 -m http.server 8000
 ```
 

@@ -108,6 +108,9 @@ main {
   border: 1px solid rgba(200, 195, 185, 0.6);
   width: 100%;
   max-width: 760px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .map {
@@ -344,6 +347,82 @@ main {
   gap: 12px;
 }
 
+.map-cards {
+  display: none;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.map-cards::-webkit-scrollbar {
+  height: 6px;
+}
+
+.map-cards::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.5);
+  border-radius: 999px;
+}
+
+.map-card {
+  flex: 0 0 auto;
+  min-width: 220px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.92);
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 10px;
+}
+
+.map-card img {
+  width: 48px;
+  height: 48px;
+  align-self: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  border: 2px solid rgba(15, 23, 42, 0.08);
+}
+
+.map-card .title {
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.map-card .status {
+  margin-top: 6px;
+  font-weight: 800;
+  font-size: 12px;
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--bubble-accent, #4b5563);
+}
+
+.map-card[data-status="low"] {
+  --bubble-accent: #1db455;
+}
+
+.map-card[data-status="medium"] {
+  --bubble-accent: #f1c842;
+}
+
+.map-card[data-status="high"] {
+  --bubble-accent: #e64a3b;
+}
+
+.map-card[data-status="very_high"] {
+  --bubble-accent: var(--very-high);
+}
+
+.map-card[data-status="unknown"] {
+  --bubble-accent: var(--unknown);
+}
+
 .trend {
   margin-top: 18px;
   padding: 16px;
@@ -496,6 +575,37 @@ main {
 
   .legend {
     border-radius: 18px;
+  }
+}
+
+@media (max-width: 420px) {
+  .map {
+    aspect-ratio: 9 / 13;
+  }
+
+  .map-direction {
+    top: auto;
+    bottom: 8px;
+    right: 8px;
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .bubble-layer {
+    display: none;
+  }
+
+  .pointer-layer line {
+    display: none;
+  }
+
+  .pointer-layer circle {
+    transform: scale(0.8);
+    transform-origin: center;
+  }
+
+  .map-cards {
+    display: flex;
   }
 }
 

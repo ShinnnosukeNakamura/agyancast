@@ -1,7 +1,7 @@
 # GTFS-RT サンプル取得結果（検証メモ）
 
 取得日時（JST）: 2026-02-12 23:43:36
-保存先: /Users/nakamurashinnosuke/Documents/GitHub/agyancast/samples/gtfs_rt/20260212_234336
+保存先: samples/gtfs_rt/20260212_234336
 
 ## 1. サンプル取得の範囲
 

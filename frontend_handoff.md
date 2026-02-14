@@ -5,7 +5,7 @@
 - データは S3 に配置される `web/data/daily_delay.json` を参照する。
 
 ## 現在のフロント構成
-- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/web/`
+- `web/`
   - `index.html`
   - `styles.css`
   - `app.js`
@@ -115,18 +115,18 @@ new Chart(ctx, { type: 'line', data: { labels, datasets }, options: {...} });
 ## ローカルでのデバッグ手順
 ### 1. 当日分のサンプルJSONを作る
 ```bash
-python3 /Users/nakamurashinnosuke/Documents/GitHub/agyancast/scripts/plot_daily_delay.py --date 2026-02-14 --mode hourly
+python3 scripts/plot_daily_delay.py --date 2026-02-14 --mode hourly
 ```
 
 ### 2. サンプルを `web/data/` に配置
 ```bash
-cp /Users/nakamurashinnosuke/Documents/GitHub/agyancast/samples/daily_delay/daily_delay_2026-02-14_hourly.json \
-  /Users/nakamurashinnosuke/Documents/GitHub/agyancast/web/data/daily_delay.json
+cp samples/daily_delay/daily_delay_2026-02-14_hourly.json \
+  web/data/daily_delay.json
 ```
 
 ### 3. ローカルサーバを起動
 ```bash
-cd /Users/nakamurashinnosuke/Documents/GitHub/agyancast/web
+cd web
 python3 -m http.server 8000
 ```
 

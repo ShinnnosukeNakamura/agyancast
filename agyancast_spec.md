@@ -91,7 +91,7 @@ https://km.bus-vision.jp/kumamoto/view/opendataKuma.html
 `spots.csv` は各モールの停留所を各社ごとに列挙した一覧であり、
 GTFS-RT の `stop_time_update` に含まれる `stop_id` と結合して利用する。
 
-- ファイル: /Users/nakamurashinnosuke/Documents/GitHub/agyancast/spots.csv
+- ファイル: spots.csv
 - カラム: mall_name, company, stop_id, stop_name, stop_lat, stop_lon など
 - 主キー: (company, stop_id) を想定（将来の差異に備えて安全側）
 - 形式: CSV（ヘッダ付き / UTF-8）

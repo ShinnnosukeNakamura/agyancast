@@ -203,6 +203,8 @@ const render = async () => {
   overlay.innerHTML = "";
   const mobileList = document.getElementById("mobile-list");
   if (mobileList) mobileList.innerHTML = "";
+  const mapCards = document.getElementById("map-cards");
+  if (mapCards) mapCards.innerHTML = "";
 
   const pointerLayer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   pointerLayer.classList.add("pointer-layer");
@@ -282,14 +284,40 @@ const render = async () => {
       card.appendChild(cardContent);
       mobileList.appendChild(card);
     }
+
+    if (mapCards) {
+      const card = document.createElement("div");
+      card.className = "map-card";
+      card.dataset.status = statusKey;
+      const cardIcon = document.createElement("img");
+      cardIcon.src = meta.icon;
+      cardIcon.alt = meta.label;
+
+      const cardContent = document.createElement("div");
+      const cardTitle = document.createElement("div");
+      cardTitle.className = "title";
+      cardTitle.textContent = nameOverrides[place.name] || place.name;
+      const cardStatus = document.createElement("div");
+      cardStatus.className = "status";
+      cardStatus.textContent = meta.label;
+
+      cardContent.appendChild(cardTitle);
+      cardContent.appendChild(cardStatus);
+
+      card.appendChild(cardIcon);
+      card.appendChild(cardContent);
+      mapCards.appendChild(card);
+    }
     return { place, bubble };
   });
 
   const layoutSide = (list, side, rect) => {
     if (!list.length) return;
-    const pad = 28;
+    const pad = 24;
     const available = Math.max(0, rect.height - pad * 2);
-    const minGap = rect.height < 650 ? 110 : 130;
+    let minGap = 130;
+    if (rect.height < 650) minGap = 110;
+    if (rect.height < 560) minGap = 90;
     let gap = 0;
     if (list.length > 1) {
       gap = minGap;
