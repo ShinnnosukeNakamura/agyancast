@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>熊本市 混雑状況 | あーぎゃん予報</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=20260214-4" />
   </head>
   <body>
     <div class="page">
@@ -29,6 +29,22 @@
               <div class="map-overlay" id="map-overlay"></div>
             </div>
             <div class="map-direction">阿蘇方面 →</div>
+          </div>
+        </section>
+
+        <section class="mall-list" id="mall-list">
+          <div class="mall-list-header">
+            <div class="mall-list-title">モール混雑一覧</div>
+            <div class="mall-list-sub">表形式で見やすく並べます</div>
+          </div>
+          <div class="mall-table">
+            <div class="mall-row mall-header">
+              <div class="mall-cell mall-name">施設</div>
+              <div class="mall-cell mall-status">混雑度</div>
+              <div class="mall-cell mall-delay">遅延</div>
+              <div class="mall-cell mall-forecast">1時間後</div>
+            </div>
+            <div class="mall-rows" id="mall-table-body"></div>
           </div>
         </section>
 
@@ -72,6 +88,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="app.js"></script>
+    <script src="app.js?v=20260214-4"></script>
   </body>
 </html>

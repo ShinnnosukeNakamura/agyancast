@@ -102,12 +102,12 @@ main {
 }
 
 .map-shell {
-  background: white;
+  background: transparent;
   margin-top: 18px;
-  padding: 16px;
-  border-radius: 20px;
-  box-shadow: 0 18px 40px rgba(42, 38, 24, 0.18);
-  border: 1px solid rgba(200, 195, 185, 0.6);
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
   width: 100%;
   max-width: 980px;
   display: flex;
@@ -115,11 +115,160 @@ main {
   gap: 12px;
 }
 
+.mall-list {
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(200, 195, 185, 0.5);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+  width: 100%;
+  max-width: 980px;
+  backdrop-filter: blur(8px);
+}
+
+.mall-list-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.mall-list-title {
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+}
+
+.mall-list-sub {
+  font-size: 13px;
+  opacity: 0.68;
+}
+
+.mall-table {
+  display: grid;
+  gap: 0;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 16px;
+  padding: 0;
+}
+
+.mall-table::-webkit-scrollbar {
+  height: 6px;
+}
+
+.mall-table::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.5);
+  border-radius: 999px;
+}
+
+.mall-row {
+  display: grid;
+  grid-template-columns: 1.6fr 0.9fr 0.7fr 0.7fr;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+  background: transparent;
+  min-width: 520px;
+}
+
+.mall-row:not(.mall-header) {
+  position: relative;
+  overflow: hidden;
+}
+
+.mall-row:not(.mall-header)::before {
+  content: "";
+  position: absolute;
+  inset: 10px auto 10px 10px;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--accent, #cbd5e1);
+  opacity: 0.8;
+}
+
+.mall-header {
+  background: rgba(244, 246, 251, 0.95);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.45);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: rgba(30, 41, 59, 0.6);
+}
+
+.mall-row:last-child {
+  border-bottom: none;
+}
+
+.mall-cell {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.mall-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.mall-name-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.mall-name-icon img {
+  width: 24px;
+  height: 24px;
+}
+
+.mall-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.06);
+  font-weight: 800;
+  font-size: 12px;
+  color: var(--accent, #475569);
+}
+
+.mall-delay {
+  font-size: 13px;
+  opacity: 0.75;
+  font-weight: 700;
+}
+
+.mall-row .mall-forecast {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(15, 23, 42, 0.6);
+  font-style: italic;
+}
+
+.mall-row[data-status="low"] { --accent: var(--low); }
+.mall-row[data-status="medium"] { --accent: var(--medium); }
+.mall-row[data-status="high"] { --accent: var(--high); }
+.mall-row[data-status="very_high"] { --accent: var(--very-high); }
+.mall-row[data-status="unknown"] { --accent: var(--unknown); }
+
 .map {
   position: relative;
   width: 100%;
   height: clamp(560px, 74vh, 820px);
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
   background: var(--paper);
   touch-action: none;
@@ -235,14 +384,6 @@ main {
 .marker[data-status="high"] { --accent: #e64a3b; }
 .marker[data-status="very_high"] { --accent: var(--very-high); }
 .marker[data-status="unknown"] { --accent: var(--unknown); }
-.map::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(90deg, rgba(248, 246, 241, 0.9) 0%, rgba(248, 246, 241, 0) 26%, rgba(248, 246, 241, 0) 74%, rgba(248, 246, 241, 0.9) 100%);
-  pointer-events: none;
-}
 
 .marker {
   position: absolute;
@@ -716,6 +857,14 @@ main {
 
   .legend {
     border-radius: 18px;
+  }
+
+  .mall-row {
+    min-width: 460px;
+  }
+
+  .mall-name {
+    font-size: 14px;
   }
 }
 

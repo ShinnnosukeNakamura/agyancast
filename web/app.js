@@ -395,6 +395,54 @@ const formatDelay = (delaySec) => {
   return `遅延 ${minutes}分`;
 };
 
+const renderMallList = (placesData, latest, latestDetail) => {
+  const body = document.getElementById("mall-table-body");
+  if (!body) return;
+  body.innerHTML = "";
+  placesData.places.forEach((place) => {
+    const detail = latestDetail.malls?.[place.id] ?? null;
+    const statusKey = latest.statuses[place.id] || detail?.status || "unknown";
+    const meta = statusMeta[statusKey] || statusMeta.unknown;
+
+    const row = document.createElement("div");
+    row.className = "mall-row";
+    row.dataset.status = statusKey;
+
+    const nameCell = document.createElement("div");
+    nameCell.className = "mall-cell mall-name";
+
+    const iconWrap = document.createElement("div");
+    iconWrap.className = "mall-name-icon";
+    const icon = document.createElement("img");
+    icon.src = meta.icon;
+    icon.alt = meta.label;
+    iconWrap.appendChild(icon);
+
+    const title = document.createElement("div");
+    title.textContent = nameOverrides[place.name] || place.name;
+
+    nameCell.append(iconWrap, title);
+
+    const status = document.createElement("div");
+    status.className = "mall-cell mall-status";
+    const statusPill = document.createElement("span");
+    statusPill.className = "mall-status-pill";
+    statusPill.textContent = meta.label;
+    status.appendChild(statusPill);
+
+    const delay = document.createElement("div");
+    delay.className = "mall-cell mall-delay";
+    delay.textContent = formatDelay(detail?.delay_sec);
+
+    const forecast = document.createElement("div");
+    forecast.className = "mall-cell mall-forecast";
+    forecast.textContent = "準備中";
+
+    row.append(nameCell, status, delay, forecast);
+    body.appendChild(row);
+  });
+};
+
 const initPan = () => {
   const map = document.getElementById("map");
   const viewport = document.getElementById("map-viewport");
@@ -467,6 +515,8 @@ const render = async () => {
     const updatedAt = latest.updated_at || latestDetail.updated_at || "";
     updatedEl.textContent = formatDateTime(updatedAt);
   }
+
+  renderMallList(placesData, latest, latestDetail);
 
   const overlay = document.getElementById("map-overlay");
   overlay.innerHTML = "";
