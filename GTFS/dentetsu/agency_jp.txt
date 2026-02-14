@@ -1,0 +1,2 @@
+"agency_id","agency_official_name","agency_zip_number","agency_address","agency_president_pos","agency_president_name"
+"1330001001517","熊本電鉄バス","8600862","熊本県熊本市中央区黒髪３丁目７番２９号","代表取締役社長","中島　敬髙"

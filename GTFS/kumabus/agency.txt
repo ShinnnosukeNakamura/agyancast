@@ -1,0 +1,2 @@
+"agency_id","agency_name","agency_url","agency_timezone","agency_lang","agency_phone","agency_fare_url"
+"9330001001600","熊本バス","http://www.kuma-bus.co.jp/","Asia/Tokyo","ja","0963708181",

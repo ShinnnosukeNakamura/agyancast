@@ -1,0 +1,2 @@
+"agency_id","agency_official_name","agency_zip_number","agency_address","agency_president_pos","agency_president_name"
+"3330001008122","熊本都市バス","8600821","熊本市中央区本山2丁目9-32","代表取締役社長","高田 晋"

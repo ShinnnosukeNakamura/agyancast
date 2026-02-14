@@ -1,0 +1,2 @@
+"agency_id","agency_official_name","agency_zip_number","agency_address","agency_president_pos","agency_president_name"
+"9330001006723","九州産交バス","8600068","熊本市西区上代4丁目13番34号","代表取締役社長","森 敬輔"

@@ -1,0 +1,198 @@
+{
+  "summaries": [
+    {
+      "file": "dentetsu_alrt_update.bin",
+      "company": "dentetsu",
+      "type": "alrt_update",
+      "entities": 2,
+      "alert_entities": 2,
+      "with_active_period": 2,
+      "with_informed_entity": 2,
+      "with_cause": 2,
+      "with_effect": 2,
+      "with_header": 2,
+      "with_description": 2
+    },
+    {
+      "file": "dentetsu_trip_update.bin",
+      "company": "dentetsu",
+      "type": "trip_update",
+      "entities": 3,
+      "trip_updates": 3,
+      "stop_time_updates": 128,
+      "stop_id_count": 128,
+      "arrival_delay": 128,
+      "departure_delay": 128,
+      "any_delay": 128,
+      "trip_update_timestamp_count": 3
+    },
+    {
+      "file": "dentetsu_vpos_update.bin",
+      "company": "dentetsu",
+      "type": "vpos_update",
+      "entities": 3,
+      "vehicle_entities": 3,
+      "with_trip": 3,
+      "with_route_id": 3,
+      "with_vehicle_id": 3,
+      "with_position": 3,
+      "with_speed": 3,
+      "with_bearing": 0,
+      "with_timestamp": 3,
+      "with_occupancy_status": 0,
+      "with_congestion_level": 0
+    },
+    {
+      "file": "kumabus_alrt_update.bin",
+      "company": "kumabus",
+      "type": "alrt_update",
+      "entities": 5,
+      "alert_entities": 5,
+      "with_active_period": 5,
+      "with_informed_entity": 5,
+      "with_cause": 5,
+      "with_effect": 5,
+      "with_header": 5,
+      "with_description": 5
+    },
+    {
+      "file": "kumabus_trip_update.bin",
+      "company": "kumabus",
+      "type": "trip_update",
+      "entities": 1,
+      "trip_updates": 1,
+      "stop_time_updates": 24,
+      "stop_id_count": 24,
+      "arrival_delay": 24,
+      "departure_delay": 24,
+      "any_delay": 24,
+      "trip_update_timestamp_count": 1
+    },
+    {
+      "file": "kumabus_vpos_update.bin",
+      "company": "kumabus",
+      "type": "vpos_update",
+      "entities": 1,
+      "vehicle_entities": 1,
+      "with_trip": 1,
+      "with_route_id": 1,
+      "with_vehicle_id": 1,
+      "with_position": 1,
+      "with_speed": 1,
+      "with_bearing": 0,
+      "with_timestamp": 1,
+      "with_occupancy_status": 0,
+      "with_congestion_level": 0
+    },
+    {
+      "file": "sankobus_alrt_update.bin",
+      "company": "sankobus",
+      "type": "alrt_update",
+      "entities": 5,
+      "alert_entities": 5,
+      "with_active_period": 5,
+      "with_informed_entity": 5,
+      "with_cause": 5,
+      "with_effect": 5,
+      "with_header": 5,
+      "with_description": 5
+    },
+    {
+      "file": "sankobus_trip_update.bin",
+      "company": "sankobus",
+      "type": "trip_update",
+      "entities": 5,
+      "trip_updates": 5,
+      "stop_time_updates": 247,
+      "stop_id_count": 247,
+      "arrival_delay": 247,
+      "departure_delay": 247,
+      "any_delay": 247,
+      "trip_update_timestamp_count": 5
+    },
+    {
+      "file": "sankobus_vpos_update.bin",
+      "company": "sankobus",
+      "type": "vpos_update",
+      "entities": 5,
+      "vehicle_entities": 5,
+      "with_trip": 5,
+      "with_route_id": 5,
+      "with_vehicle_id": 5,
+      "with_position": 5,
+      "with_speed": 3,
+      "with_bearing": 0,
+      "with_timestamp": 5,
+      "with_occupancy_status": 0,
+      "with_congestion_level": 0
+    },
+    {
+      "file": "toshibus_alrt_update.bin",
+      "company": "toshibus",
+      "type": "alrt_update",
+      "entities": 3,
+      "alert_entities": 3,
+      "with_active_period": 3,
+      "with_informed_entity": 3,
+      "with_cause": 3,
+      "with_effect": 3,
+      "with_header": 3,
+      "with_description": 3
+    },
+    {
+      "file": "toshibus_trip_update.bin",
+      "company": "toshibus",
+      "type": "trip_update",
+      "entities": 1,
+      "trip_updates": 1,
+      "stop_time_updates": 31,
+      "stop_id_count": 31,
+      "arrival_delay": 31,
+      "departure_delay": 31,
+      "any_delay": 31,
+      "trip_update_timestamp_count": 1
+    },
+    {
+      "file": "toshibus_vpos_update.bin",
+      "company": "toshibus",
+      "type": "vpos_update",
+      "entities": 1,
+      "vehicle_entities": 1,
+      "with_trip": 1,
+      "with_route_id": 1,
+      "with_vehicle_id": 1,
+      "with_position": 1,
+      "with_speed": 1,
+      "with_bearing": 0,
+      "with_timestamp": 1,
+      "with_occupancy_status": 0,
+      "with_congestion_level": 0
+    }
+  ],
+  "spot_match": [
+    {
+      "company": "dentetsu",
+      "stop_time_updates_with_stop_id": 128,
+      "matches_in_spots": 9,
+      "unique_matched_stop_ids": 3
+    },
+    {
+      "company": "kumabus",
+      "stop_time_updates_with_stop_id": 24,
+      "matches_in_spots": 2,
+      "unique_matched_stop_ids": 2
+    },
+    {
+      "company": "sankobus",
+      "stop_time_updates_with_stop_id": 247,
+      "matches_in_spots": 14,
+      "unique_matched_stop_ids": 10
+    },
+    {
+      "company": "toshibus",
+      "stop_time_updates_with_stop_id": 31,
+      "matches_in_spots": 3,
+      "unique_matched_stop_ids": 3
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "agyancast-infra",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "cdk": "cdk",
+    "synth": "cdk synth"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.550.0",
+    "csv-parse": "^5.5.6",
+    "gtfs-realtime-bindings": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.25",
+    "aws-cdk": "^2.177.0",
+    "aws-cdk-lib": "^2.177.0",
+    "constructs": "^10.3.0",
+    "esbuild": "^0.20.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

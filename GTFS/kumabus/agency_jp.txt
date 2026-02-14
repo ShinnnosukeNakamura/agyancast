@@ -1,0 +1,2 @@
+"agency_id","agency_official_name","agency_zip_number","agency_address","agency_president_pos","agency_president_name"
+"9330001001600","熊本バス","8620947","熊本県熊本市東区画図町重富６００","代表取締役社長","岩田　昭彦"

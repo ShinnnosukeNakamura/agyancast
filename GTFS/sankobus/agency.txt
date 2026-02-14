@@ -1,0 +1,2 @@
+"agency_id","agency_name","agency_url","agency_timezone","agency_lang","agency_phone","agency_fare_url"
+"9330001006723","九州産交バス","https://www.sankobus.jp/","Asia/Tokyo","ja","0963258243",

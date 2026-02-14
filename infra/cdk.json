@@ -1,0 +1,9 @@
+{
+  "app": "npx ts-node --prefer-ts-exts bin/agyancast.ts",
+  "context": {
+    "prefix": "agyancast",
+    "env": "dev",
+    "dataBucketName": "agyancast-dev-data",
+    "webBucketName": "agyancast-dev-web"
+  }
+}
