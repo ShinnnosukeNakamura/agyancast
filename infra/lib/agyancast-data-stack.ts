@@ -60,7 +60,13 @@ export class AgyancastDataStack extends cdk.Stack {
     });
 
     new s3deploy.BucketDeployment(this, 'DeployWebAssets', {
-      sources: [s3deploy.Source.asset(path.join(__dirname, '..', '..', 'web'))],
+      // Runtime data JSONs are written by Lambdas. Exclude them from static deploy
+      // to avoid stale build-time files overwriting live data.
+      sources: [
+        s3deploy.Source.asset(path.join(__dirname, '..', '..', 'web', 'dist'), {
+          exclude: ['data/*'],
+        }),
+      ],
       destinationBucket: webBucket,
       prune: false,
     });
