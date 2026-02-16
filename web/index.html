@@ -1,93 +1,27 @@
 <!doctype html>
 <html lang="ja">
   <head>
-    <meta charset="utf-8" />
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#4c96ea" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="混雑ナビ" />
     <title>熊本市 混雑状況 | あーぎゃん予報</title>
-    <link rel="stylesheet" href="styles.css?v=20260214-4" />
+    <link rel="icon" href="/icons/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
-    <div class="page">
-      <header class="hero">
-        <div class="hero-title">
-          <span class="hero-city">熊本市</span>
-          <span class="hero-sub">混雑状況</span>
-        </div>
-        <div class="hero-meta">
-          <div class="hero-update">
-            <span class="label">データ時刻</span>
-            <span id="updated-time">----</span>
-          </div>
-        </div>
-      </header>
-
-      <main>
-        <section class="map-shell">
-          <div class="map" id="map">
-            <div class="map-viewport" id="map-viewport">
-              <div class="map-bg"></div>
-              <div class="map-overlay" id="map-overlay"></div>
-            </div>
-            <div class="map-direction">阿蘇方面 →</div>
-          </div>
-        </section>
-
-        <section class="mall-list" id="mall-list">
-          <div class="mall-list-header">
-            <div class="mall-list-title">モール混雑一覧</div>
-            <div class="mall-list-sub">表形式で見やすく並べます</div>
-          </div>
-          <div class="mall-table">
-            <div class="mall-row mall-header">
-              <div class="mall-cell mall-name">施設</div>
-              <div class="mall-cell mall-status">混雑度</div>
-              <div class="mall-cell mall-delay">遅延</div>
-              <div class="mall-cell mall-forecast">1時間後</div>
-            </div>
-            <div class="mall-rows" id="mall-table-body"></div>
-          </div>
-        </section>
-
-        <section class="trend" id="trend">
-          <div class="trend-header">
-            <div class="trend-title">今日の混雑推移</div>
-            <div class="trend-meta" id="trend-meta">--</div>
-          </div>
-          <div class="trend-chart">
-            <div class="trend-scroll">
-              <canvas id="daily-delay-chart" height="160"></canvas>
-            </div>
-          </div>
-        </section>
-
-        <section class="mobile-list" id="mobile-list"></section>
-
-        <section class="legend">
-          <div class="legend-item" data-status="low">
-            <span class="legend-swatch"></span>
-            <span>スイスイ</span>
-          </div>
-          <div class="legend-item" data-status="medium">
-            <span class="legend-swatch"></span>
-            <span>普通</span>
-          </div>
-          <div class="legend-item" data-status="high">
-            <span class="legend-swatch"></span>
-            <span>混雑</span>
-          </div>
-          <div class="legend-item" data-status="very_high">
-            <span class="legend-swatch"></span>
-            <span>大混雑</span>
-          </div>
-          <div class="legend-item" data-status="unknown">
-            <span class="legend-swatch"></span>
-            <span>データ不足</span>
-          </div>
-        </section>
-      </main>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="app.js?v=20260214-4"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

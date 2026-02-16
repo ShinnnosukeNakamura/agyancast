@@ -12,8 +12,9 @@ import xml.etree.ElementTree as ET
 BASE_DIR = Path(__file__).resolve().parents[1]
 SPOTS_PATH = BASE_DIR / "spots.csv"
 WEB_DIR = BASE_DIR / "web"
-ASSETS_DIR = WEB_DIR / "assets"
-DATA_DIR = WEB_DIR / "data"
+PUBLIC_DIR = WEB_DIR / "public"
+ASSETS_DIR = PUBLIC_DIR / "assets"
+DATA_DIR = PUBLIC_DIR / "data"
 
 WIDTH = 1600
 HEIGHT = 900

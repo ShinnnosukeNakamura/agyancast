@@ -9,3 +9,6 @@ __pycache__/
 .env.*
 outputs/
 .codex/
+.venv/
+web/dist/
+icon.png
