@@ -1,0 +1,40 @@
+{
+  "updated_at": "2026-02-18T08:30:00+09:00",
+  "area_id": "semicon_techno_park",
+  "area_name": "セミコンテクノパーク周辺",
+  "traffic": {
+    "section_name": "原水駅北口→県立技術短期大学前",
+    "from_stop_id": "100879_1",
+    "to_stop_id": "100880_1",
+    "distance_km": 2.4,
+    "avg_speed_kmh": 18.4,
+    "status": "smooth",
+    "sample_count": 5
+  },
+  "stops": [
+    {
+      "operator": "dentetsu",
+      "stop_id": "100880_1",
+      "stop_name": "県立技術短期大学前",
+      "lat": 32.887573,
+      "lon": 130.83466,
+      "delay_sec": 240,
+      "predictions": {
+        "h1_sec": null,
+        "h3_sec": null
+      }
+    },
+    {
+      "operator": "sankobus",
+      "stop_id": "100880_1",
+      "stop_name": "県立技術短期大学前",
+      "lat": 32.887573,
+      "lon": 130.83466,
+      "delay_sec": 300,
+      "predictions": {
+        "h1_sec": null,
+        "h3_sec": null
+      }
+    }
+  ]
+}

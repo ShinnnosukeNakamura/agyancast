@@ -31,6 +31,7 @@ RAIL_TYPES = ["rail", "light_rail", "subway"]
 def read_spots(exclude_malls=None):
     exclude_malls = exclude_malls or set()
     malls = {}
+    mall_coords = {}
     lats = []
     lons = []
     with SPOTS_PATH.open(encoding="utf-8") as f:
@@ -42,6 +43,12 @@ def read_spots(exclude_malls=None):
             if not name:
                 continue
             try:
+                mall_lat = float(row.get("mall_lat", ""))
+                mall_lon = float(row.get("mall_lon", ""))
+                mall_coords.setdefault(name, (mall_lat, mall_lon))
+            except ValueError:
+                pass
+            try:
                 lat = float(row.get("stop_lat", ""))
                 lon = float(row.get("stop_lon", ""))
             except ValueError:
@@ -49,6 +56,11 @@ def read_spots(exclude_malls=None):
             malls.setdefault(name, []).append((lat, lon))
             lats.append(lat)
             lons.append(lon)
+    for name, (lat, lon) in mall_coords.items():
+        if name in exclude_malls:
+            continue
+        lats.append(lat)
+        lons.append(lon)
     # Ensure overridden mall coordinates are included in bounds.
     for name, (lat, lon) in MALL_COORD_OVERRIDES.items():
         if name in exclude_malls:
@@ -71,7 +83,7 @@ def read_spots(exclude_malls=None):
         "min_lon": min_lon - lon_pad,
         "max_lon": max_lon + lon_pad,
     }
-    return malls, bounds
+    return malls, bounds, mall_coords
 
 
 def overpass_fetch(bounds):
@@ -362,10 +374,12 @@ def build_svg(ways, landmarks, bounds):
     return "".join(svg_parts)
 
 
-def build_places(malls, bounds):
+def build_places(malls, bounds, mall_coords):
     places = []
     for name, coords in malls.items():
-        if name in MALL_COORD_OVERRIDES:
+        if name in mall_coords:
+            avg_lat, avg_lon = mall_coords[name]
+        elif name in MALL_COORD_OVERRIDES:
             avg_lat, avg_lon = MALL_COORD_OVERRIDES[name]
         else:
             avg_lat = sum(c[0] for c in coords) / len(coords)
@@ -399,7 +413,7 @@ def main():
     ASSETS_DIR.mkdir(parents=True, exist_ok=True)
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    malls, bounds = read_spots(exclude_malls={"ゆめタウン光の森"})
+    malls, bounds, mall_coords = read_spots(exclude_malls={"ゆめタウン光の森"})
     print("bounds", bounds)
 
     print("fetching OSM from Overpass...")
@@ -410,7 +424,7 @@ def main():
     svg = build_svg(ways, landmarks, bounds)
     (ASSETS_DIR / "kumamoto_map.svg").write_text(svg, encoding="utf-8")
 
-    places = build_places(malls, bounds)
+    places = build_places(malls, bounds, mall_coords)
     data = {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
         "bounds": bounds,

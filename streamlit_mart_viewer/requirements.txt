@@ -1,0 +1,5 @@
+altair
+boto3
+pandas
+pyarrow
+streamlit

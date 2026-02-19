@@ -1,0 +1,12 @@
+{
+  "updated_at": "2026-02-17T08:30:00+09:00",
+  "route_id": "aso_airport_limousine",
+  "route_name": "阿蘇くまもと空港リムジンバス",
+  "status": "slight_delay",
+  "delay_sec": 360,
+  "note": "交通集中により最大10分程度の遅れ。予測値は準備中です。",
+  "predictions": {
+    "h1_sec": null,
+    "h3_sec": null
+  }
+}

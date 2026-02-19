@@ -1,0 +1,89 @@
+{
+  "date": "2026-02-19",
+  "timezone": "Asia/Tokyo",
+  "area_id": "semicon_techno_park",
+  "area_name": "セミコンテクノパーク周辺",
+  "hours": [
+    "00",
+    "01",
+    "02",
+    "03",
+    "04",
+    "05",
+    "06",
+    "07",
+    "08",
+    "09",
+    "10",
+    "11",
+    "12",
+    "13",
+    "14",
+    "15",
+    "16",
+    "17",
+    "18",
+    "19",
+    "20",
+    "21",
+    "22",
+    "23"
+  ],
+  "stops": [
+    {
+      "operator": "dentetsu",
+      "stop_id": "100880_1",
+      "stop_name": "県立技術短期大学前",
+      "delay_min": [null, null, null, null, null, null, 0.5, 1.2, 2.1, 2.8, 2.5, 2.0, 1.9, 1.8, 2.0, 2.3, 2.8, 3.4, 3.8, 3.1, 2.4, 1.8, 1.1, null]
+    }
+  ],
+  "delay_points": [
+    { "hour": "06", "delay_min": 0.5, "sample_count": 2 },
+    { "hour": "07", "delay_min": 1.2, "sample_count": 3 },
+    { "hour": "08", "delay_min": 2.1, "sample_count": 5 },
+    { "hour": "09", "delay_min": 2.8, "sample_count": 6 },
+    { "hour": "10", "delay_min": 2.5, "sample_count": 6 },
+    { "hour": "11", "delay_min": 2.0, "sample_count": 4 },
+    { "hour": "12", "delay_min": 1.9, "sample_count": 4 },
+    { "hour": "13", "delay_min": 1.8, "sample_count": 4 },
+    { "hour": "14", "delay_min": 2.0, "sample_count": 4 },
+    { "hour": "15", "delay_min": 2.3, "sample_count": 4 },
+    { "hour": "16", "delay_min": 2.8, "sample_count": 6 },
+    { "hour": "17", "delay_min": 3.4, "sample_count": 7 },
+    { "hour": "18", "delay_min": 3.8, "sample_count": 8 },
+    { "hour": "19", "delay_min": 3.1, "sample_count": 6 },
+    { "hour": "20", "delay_min": 2.4, "sample_count": 5 },
+    { "hour": "21", "delay_min": 1.8, "sample_count": 4 },
+    { "hour": "22", "delay_min": 1.1, "sample_count": 3 }
+  ],
+  "traffic": {
+    "section_name": "原水駅北口→県立技術短期大学前",
+    "from_stop_id": "100879_1",
+    "to_stop_id": "100880_1",
+    "distance_km": 2.4,
+    "thresholds": {
+      "congested_kmh": 15,
+      "very_congested_kmh": 8,
+      "min_samples": 3
+    },
+    "speed_points": [
+      { "hour": "06", "avg_speed_kmh": 18.5, "status": "unknown", "sample_count": 1 },
+      { "hour": "07", "avg_speed_kmh": 16.8, "status": "smooth", "sample_count": 3 },
+      { "hour": "08", "avg_speed_kmh": 14.2, "status": "congested", "sample_count": 4 },
+      { "hour": "09", "avg_speed_kmh": 13.5, "status": "congested", "sample_count": 6 },
+      { "hour": "10", "avg_speed_kmh": 14.1, "status": "congested", "sample_count": 6 },
+      { "hour": "11", "avg_speed_kmh": 15.2, "status": "smooth", "sample_count": 4 },
+      { "hour": "12", "avg_speed_kmh": 15.8, "status": "smooth", "sample_count": 4 },
+      { "hour": "13", "avg_speed_kmh": 16.0, "status": "smooth", "sample_count": 4 },
+      { "hour": "14", "avg_speed_kmh": 15.4, "status": "smooth", "sample_count": 4 },
+      { "hour": "15", "avg_speed_kmh": 14.8, "status": "congested", "sample_count": 4 },
+      { "hour": "16", "avg_speed_kmh": 13.9, "status": "congested", "sample_count": 6 },
+      { "hour": "17", "avg_speed_kmh": 12.8, "status": "congested", "sample_count": 7 },
+      { "hour": "18", "avg_speed_kmh": 11.9, "status": "congested", "sample_count": 8 },
+      { "hour": "19", "avg_speed_kmh": 13.2, "status": "congested", "sample_count": 6 },
+      { "hour": "20", "avg_speed_kmh": 14.9, "status": "congested", "sample_count": 5 },
+      { "hour": "21", "avg_speed_kmh": 16.1, "status": "smooth", "sample_count": 4 },
+      { "hour": "22", "avg_speed_kmh": 17.0, "status": "smooth", "sample_count": 3 }
+    ]
+  }
+}

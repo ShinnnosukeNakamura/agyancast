@@ -1,171 +1,234 @@
-# フロント引き継ぎ: 日次遅延グラフの組み込み
+# フロント設計書（買物 / 通勤 / 来熊）
+更新日: 2026-02-18
 
-## 目的
-- 地図の下に **モール別の遅延推移（当日分 / 毎時）** を可視化する。
-- データは S3 に配置される `web/data/daily_delay.json` を参照する。
+## 1. 画面構成
+- フッター固定タブは3種:
+  - `買物`
+  - `通勤`
+  - `来熊`
+- タブ切替はSPA内状態で実施（ページ遷移なし）。
 
-## 現在のフロント構成
-- `web/`
-  - `index.html`
-  - `styles.css`
-  - `app.js`
-  - `data/places.json`
-  - `data/latest.json`
-  - `data/latest_detail.json`
+## 2. 各タブの役割
 
-## 追加するデータ（新規）
-- `web/data/daily_delay.json`
+### 2.1 買物タブ
+- 既存機能を維持:
+  - おすすめカード（今行くなら / 狙い目時間）
+  - 並び順基準（モール選択 / 現在地）
+  - 一覧（おすすめ順 / 空いてる順 / 近い順）
+  - 今日の推移グラフ（05-24時）
+  - 補助地図
 
-### データ形式（例）
+### 2.2 通勤タブ
+- セミコンテクノパーク周辺の混雑を、**1拠点（セミコンテクノパーク）** として表示。
+- 方面分割（菊陽/大津）は廃止し、単一ダッシュボード化。
+- 対象停留所（GTFS指定）:
+  - `県立技術短期大学前`（`dentetsu` / `100880_1`）
+  - `県立技術短期大学前`（`sankobus` / `100880_1`）
+- 表示要素:
+  - エリア全体KPI（現在 / 1時間後 / 3時間後）
+  - 区間平均時速（原水駅北口→県立技術短期大学前）
+  - 区間渋滞判定（15km/h以下=渋滞、8km/h以下=大渋滞、サンプル3件未満は判定保留）
+  - エリア全体の当日推移グラフ（05-24時）
+  - 一覧も1行（セミコンテクノパーク）
+
+### 2.3 来熊タブ
+- 空港リムジンバス向けダッシュボード。
+- 3レイヤ表示:
+  1. 全体遅延（阿蘇くまもと空港終点ベース）
+  2. 停留所別遅延（桜町BT ↔ 阿蘇くまもと空港、往復）
+  3. 停留所別の当日推移グラフ（05-24時）
+- 停留所別表示は `空港行き / 市内行き` のトグル切替。
+- 停留所別グラフは通常グラフと同様に縦軸/横軸を表示。
+
+## 3. 来熊タブの停留所方針（調査結果）
+- GTFS（`sankobus.zip`）AP系を確認し、桜町BT〜空港区間を採用。
+- 初期対象停留所:
+  - `熊本桜町バスターミナル(6番のりば)`
+  - `通町筋`
+  - `味噌天神`
+  - `水前寺公園前`
+  - `熊本県庁前`
+  - `自衛隊前`
+  - `東町中央`
+  - `益城インター口 P`
+  - `グランメッセ前`
+  - `臨空テクノパーク西`
+  - `臨空テクノパーク東`
+  - `阿蘇くまもと空港(乗車：4番のりば　※特快バスは3番のりば)`
+- 方向:
+  - 空港行き
+  - 市内行き（復路）
+
+## 4. データ契約（フロント取得）
+
+### 4.1 買物タブ
+- `/data/places.json`
+- `/data/latest.json`
+- `/data/latest_detail.json`
+- `/data/daily_delay.json`
+
+### 4.2 通勤タブ（新規）
+- `/data/commute_semicon_latest.json`
+- `/data/commute_semicon_daily.json`
+
+推奨フォーマット:
+
+`commute_semicon_latest.json`
 ```json
 {
-  "date": "2026-02-14",
+  "updated_at": "2026-02-18T08:30:00+09:00",
+  "area_id": "semicon_techno_park",
+  "area_name": "セミコンテクノパーク周辺",
+  "traffic": {
+    "section_name": "原水駅北口→県立技術短期大学前",
+    "from_stop_id": "100879_1",
+    "to_stop_id": "100880_1",
+    "distance_km": 2.4,
+    "avg_speed_kmh": 18.4,
+    "status": "congested",
+    "sample_count": 5
+  },
+  "stops": [
+    {
+      "operator": "dentetsu",
+      "stop_id": "100880_1",
+      "stop_name": "県立技術短期大学前",
+      "lat": 32.887573,
+      "lon": 130.83466,
+      "delay_sec": 240,
+      "predictions": { "h1_sec": null, "h3_sec": null }
+    }
+  ]
+}
+```
+
+`commute_semicon_daily.json`
+```json
+{
+  "date": "2026-02-18",
   "timezone": "Asia/Tokyo",
-  "hours": ["00","01",..."23"],
-  "series": {
-    "ゆめタウン浜線": [0.8, 1.2, null, 3.4, ...],
-    "アミュプラザくまもと": [2.1, 2.2, 2.8, ...]
+  "area_id": "semicon_techno_park",
+  "area_name": "セミコンテクノパーク周辺",
+  "hours": ["00","01","...","23"],
+  "delay_points": [
+    { "hour": "06", "delay_min": 0.5, "sample_count": 2 }
+  ],
+  "traffic": {
+    "section_name": "原水駅北口→県立技術短期大学前",
+    "from_stop_id": "100879_1",
+    "to_stop_id": "100880_1",
+    "distance_km": 2.4,
+    "thresholds": {
+      "congested_kmh": 15,
+      "very_congested_kmh": 8,
+      "min_samples": 3
+    },
+    "speed_points": [
+      { "hour": "06", "avg_speed_kmh": 18.5, "status": "unknown", "sample_count": 1 }
+    ]
+  },
+  "stops": [
+    {
+      "operator": "dentetsu",
+      "stop_id": "100880_1",
+      "stop_name": "県立技術短期大学前",
+      "delay_min": [null, 1.2, 2.0, ...]
+    }
+  ]
+}
+```
+- 遅延グラフは `delay_points` をそのまま描画（`stops` 再集計はしない）。
+- 速度グラフは `traffic.speed_points` をそのまま描画。
+- どちらも `points` に含まれる `hour` のみ表示（未計測時間に0点を出さない）。
+
+### 4.3 来熊タブ（全体）
+- `/data/visitor_airport_latest.json`
+- `/data/visitor_airport_daily.json`
+
+### 4.4 来熊タブ（停留所別・新規）
+- `/data/visitor_airport_stops_latest.json`
+- `/data/visitor_airport_stops_daily.json`
+
+推奨フォーマット:
+
+`visitor_airport_stops_latest.json`
+```json
+{
+  "updated_at": "2026-02-18T08:30:00+09:00",
+  "route_id": "aso_airport_limousine",
+  "route_name": "阿蘇くまもと空港リムジンバス",
+  "directions": {
+    "to_airport": {
+      "label": "空港行き",
+      "stops": [
+        { "stop_id": "100002_3", "stop_name": "桜町バスターミナル", "delay_sec": 180 }
+      ]
+    },
+    "from_airport": {
+      "label": "市内行き",
+      "stops": [
+        { "stop_id": "102112_1", "stop_name": "阿蘇くまもと空港", "delay_sec": 240 }
+      ]
+    }
   }
 }
 ```
 
-- `hours` は 24時間固定（ラベル用）
-- `series` は **モール名 → 遅延中央値（分）配列**
-- データが無い時間帯は `null` を入れる（線がギャップになる）
-
-## 画面側の変更内容
-### 1. `index.html`
-地図セクションの下にグラフ表示領域を追加する。
-
-例:
-```html
-<section class="trend" id="trend">
-  <div class="trend-header">
-    <div class="trend-title">今日の混雑推移</div>
-    <div class="trend-meta" id="trend-meta">--</div>
-  </div>
-  <div class="trend-chart">
-    <canvas id="daily-delay-chart" height="140"></canvas>
-  </div>
-</section>
-```
-
-### 2. `styles.css`
-グラフ領域のスタイルを追加する。
-
-例:
-```css
-.trend {
-  margin-top: 18px;
-  padding: 16px;
-  border-radius: 14px;
-  background: #ffffff;
-  border: 2px solid #d9cfbd;
-  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.08);
-}
-
-.trend-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 8px;
-}
-
-.trend-title {
-  font-weight: 900;
-  font-size: 18px;
-}
-
-.trend-meta {
-  font-size: 13px;
-  opacity: 0.7;
-}
-```
-
-### 3. `app.js`
-- `daily_delay.json` を `fetch` してグラフを描画する。
-- Chart.js を CDN で読み込む想定（HTMLに `<script src=...>` を追加）。
-- データが無い場合はグラフ領域を非表示にする。
-
-#### 取得するデータ
-- `data/daily_delay.json`
-
-#### 描画の考え方
-- `hours` を X 軸ラベル
-- `series[mall]` を Y 軸（遅延分）
-- `null` はギャップ表示
-
-#### 実装の流れ（擬似コード）
-```js
-const daily = await fetchJson('data/daily_delay.json', null);
-if (!daily || !daily.series) { hide trend; return; }
-
-const labels = daily.hours || [];
-const datasets = Object.entries(daily.series).map(([mall, values], idx) => ({
-  label: mall,
-  data: values,
-  borderColor: palette[idx % palette.length],
-  backgroundColor: palette[idx % palette.length],
-  spanGaps: false,
-}));
-
-new Chart(ctx, { type: 'line', data: { labels, datasets }, options: {...} });
-```
-
-## ローカルでのデバッグ手順
-### 1. 当日分のサンプルJSONを作る
-```bash
-python3 scripts/plot_daily_delay.py --date 2026-02-14 --mode hourly
-```
-
-### 2. サンプルを `web/data/` に配置
-```bash
-cp samples/daily_delay/daily_delay_2026-02-14_hourly.json \
-  web/data/daily_delay.json
-```
-
-### 3. ローカルサーバを起動
-```bash
-cd web
-python3 -m http.server 8000
-```
-
-### 4. ブラウザで確認
-```
-http://localhost:8000
-```
-
-## 備考
-- `latest.json` / `latest_detail.json` は既存表示で利用中。
-- グラフ表示は **当日分のみ** でOK。
-- フロントは **静的HTML/JS** のまま維持する方針。
-
-## バックエンド修正依頼（必要）
-フロント側の現在仕様に合わせるため、以下の対応が必要です。
-
-### 1. 日次グラフ用 `daily_delay.json` の生成・配置
-- 配置先: `s3://<web-bucket>/data/daily_delay.json`
-- Content-Type: `application/json`
-- Cache-Control: `no-cache`（または短め TTL）
-- 30分〜60分間隔で更新（EventBridge + Lambda など）
-
-#### データ形式
+`visitor_airport_stops_daily.json`
 ```json
 {
-  "date": "YYYY-MM-DD",
+  "date": "2026-02-18",
   "timezone": "Asia/Tokyo",
-  "hours": ["00","01",..."23"],
-  "series": {
-    "ゆめタウン浜線": [0.8, 1.2, null, ...]
+  "hours": ["00","01","...","23"],
+  "directions": {
+    "to_airport": {
+      "stops": [
+        {
+          "stop_id": "100002_3",
+          "stop_name": "桜町バスターミナル",
+          "delay_min": [null, 1.2, 2.1, ...]
+        }
+      ]
+    },
+    "from_airport": {
+      "stops": [
+        {
+          "stop_id": "102112_1",
+          "stop_name": "阿蘇くまもと空港",
+          "delay_min": [null, 2.0, 2.8, ...]
+        }
+      ]
+    }
   }
 }
 ```
 
-### 2. グラフ表示は 05:00〜24:00 に固定
-- フロントは `hours` を 05〜24 に再構成するが、**バックエンド側でも 05〜24 に合わせた出力にするのが理想**。
-- `24` はダミーとして `null` を許容（24時ちょうどの値が無ければ `null`）。
+## 5. 状態保存（ローカル）
+- `agyancast.favorite_malls`
+- `agyancast.ui_settings_v1`
+  - 現在タブ
+  - 並び順
+  - お気に入りのみ表示
+  - 基準モール
+  - 現在地モード/最終位置
 
-### 3. モール名（キー）の整合性
-- `daily_delay.json` の `series` キーは `places.json` の `name` と一致させること。
-- `spots.csv` に入っている `mall_name` がそのまま表示名として使われる。
-- 例: `ゆめタウン浜線`, `アミュプラザくまもと`, `サクラマチ`, `鶴屋百貨店`, `イオンモール熊本`
+## 6. モバイル挙動
+- 下に引いて更新（Pull to refresh）対応。
+- 明示更新ボタンも併設。
+- `現在地を使う` は失敗理由を画面表示:
+  - HTTPS要件
+  - 権限拒否
+  - タイムアウト
+  - 端末非対応
+
+## 7. 実装対象ファイル
+- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/web/src/App.jsx`
+- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/web/src/styles.css`
+- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/web/public/data/commute_semicon_*.json`
+- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/web/public/data/visitor_airport_*.json`
+
+## 8. 完了条件
+- フッタータブが `買物 / 通勤 / 来熊` の3つで動作。
+- 来熊タブで全体遅延 + 停留所別（往復）遅延 + 停留所別グラフが表示。
+- 通勤タブでセミコンテクノパークを1拠点として表示。
+- 買物タブの既存機能が崩れない。

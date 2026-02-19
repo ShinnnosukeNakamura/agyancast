@@ -14,12 +14,105 @@ const webBucket = process.env.WEB_BUCKET ?? '';
 const fillMaxAgeMinutes = Number.parseInt(process.env.FILL_MAX_AGE_MINUTES ?? '180', 10);
 const timezone = process.env.TIMEZONE ?? 'Asia/Tokyo';
 
+const VISITOR_AIRPORT_ROUTE_ID = 'aso_airport_limousine';
+const VISITOR_AIRPORT_ROUTE_NAME = '阿蘇くまもと空港リムジンバス';
+const VISITOR_AIRPORT_COMPANY = 'sankobus';
+const VISITOR_AIRPORT_STOP_IDS = new Set(['102112_1', '102112_3', '102112_4', '102112_5']);
+const COMMUTE_SEMICON_AREA_ID = 'semicon_techno_park';
+const COMMUTE_SEMICON_AREA_NAME = 'セミコンテクノパーク周辺';
+const COMMUTE_SECTION_FROM_STOP_ID = '100879_1';
+const COMMUTE_SECTION_TO_STOP_ID = '100880_1';
+const COMMUTE_SECTION_NAME = '原水駅北口→県立技術短期大学前';
+const COMMUTE_SECTION_DISTANCE_KM = 2.4;
+const COMMUTE_TRAFFIC_MIN_SAMPLES = 3;
+const COMMUTE_TRAFFIC_CONGESTED_KMH = 15;
+const COMMUTE_TRAFFIC_VERY_CONGESTED_KMH = 8;
+type VisitorDirection = 'to_airport' | 'from_airport';
+type VisitorStopDef = { stop_id: string; stop_name: string };
+type CommuteStopDef = {
+  operator: string;
+  stop_id: string;
+  stop_name: string;
+  lat: number;
+  lon: number;
+};
+
+const COMMUTE_SEMICON_STOPS: CommuteStopDef[] = [
+  {
+    operator: 'dentetsu',
+    stop_id: '100880_1',
+    stop_name: '県立技術短期大学前',
+    lat: 32.887573,
+    lon: 130.83466,
+  },
+  {
+    operator: 'sankobus',
+    stop_id: '100880_1',
+    stop_name: '県立技術短期大学前',
+    lat: 32.887573,
+    lon: 130.83466,
+  },
+];
+
+const VISITOR_AIRPORT_ROUTE_PATTERNS: Record<VisitorDirection, RegExp[]> = {
+  to_airport: [
+    /^721_721040_/,
+    /^721_721050_/,
+    /^721_721060_/,
+    /^721_721070_/,
+  ],
+  from_airport: [
+    /^721_721041_/,
+    /^721_721051_/,
+    /^721_721061_/,
+    /^721_721071_/,
+  ],
+};
+
+const VISITOR_AIRPORT_STOPS_BY_DIRECTION: Record<VisitorDirection, VisitorStopDef[]> = {
+  to_airport: [
+    { stop_id: '100002_6', stop_name: '熊本桜町バスターミナル(6番のりば)' },
+    { stop_id: '100003_2', stop_name: '通町筋' },
+    { stop_id: '100715_2', stop_name: '味噌天神' },
+    { stop_id: '100572_2', stop_name: '水前寺公園前' },
+    { stop_id: '100183_2', stop_name: '熊本県庁前' },
+    { stop_id: '102664_2', stop_name: '自衛隊前' },
+    { stop_id: '103922_2', stop_name: '東町中央' },
+    { stop_id: '104244_2', stop_name: '益城インター口 P' },
+    { stop_id: '102177_2', stop_name: 'グランメッセ前' },
+    { stop_id: '103333_2', stop_name: '臨空テクノパーク西' },
+    { stop_id: '103319_2', stop_name: '臨空テクノパーク東' },
+    { stop_id: '102112_1', stop_name: '阿蘇くまもと空港(乗車：4番のりば　※特快バスは3番のりば)' },
+  ],
+  from_airport: [
+    { stop_id: '102112_4', stop_name: '阿蘇くまもと空港(降車：4番のりば)' },
+    { stop_id: '103319_1', stop_name: '臨空テクノパーク東' },
+    { stop_id: '103333_1', stop_name: '臨空テクノパーク西' },
+    { stop_id: '102177_1', stop_name: 'グランメッセ前' },
+    { stop_id: '104244_1', stop_name: '益城インター口 P' },
+    { stop_id: '103922_1', stop_name: '東町中央' },
+    { stop_id: '102664_1', stop_name: '自衛隊前' },
+    { stop_id: '100183_1', stop_name: '熊本県庁前' },
+    { stop_id: '100572_1', stop_name: '水前寺公園前' },
+    { stop_id: '100715_1', stop_name: '味噌天神' },
+    { stop_id: '100003_1', stop_name: '通町筋' },
+    { stop_id: '100002_9', stop_name: '熊本桜町バスターミナル(9番のりば)' },
+  ],
+};
+
+const VISITOR_AIRPORT_STOP_ID_SET_BY_DIRECTION: Record<VisitorDirection, Set<string>> = {
+  to_airport: new Set(VISITOR_AIRPORT_STOPS_BY_DIRECTION.to_airport.map((stop) => stop.stop_id)),
+  from_airport: new Set(VISITOR_AIRPORT_STOPS_BY_DIRECTION.from_airport.map((stop) => stop.stop_id)),
+};
+
 type SpotRow = {
   mall_name: string;
   company: string;
   stop_id: string;
   stop_lat?: number;
   stop_lon?: number;
+  mall_lat?: number;
+  mall_lon?: number;
 };
 
 type StopState = {
@@ -30,6 +123,18 @@ type StopState = {
 type LastState = {
   updated_at: string;
   stops: Record<string, StopState>;
+};
+
+type CommuteTrafficStatus = 'smooth' | 'congested' | 'very_congested' | 'unknown';
+
+type CommuteTraffic = {
+  section_name: string;
+  from_stop_id: string;
+  to_stop_id: string;
+  distance_km: number;
+  avg_speed_kmh: number | null;
+  status: CommuteTrafficStatus;
+  sample_count: number;
 };
 
 const getJstParts = (date: Date) => {
@@ -84,6 +189,8 @@ const loadSpots = async (): Promise<SpotRow[]> => {
     stop_id: r.stop_id,
     stop_lat: r.stop_lat ? Number.parseFloat(r.stop_lat) : undefined,
     stop_lon: r.stop_lon ? Number.parseFloat(r.stop_lon) : undefined,
+    mall_lat: r.mall_lat ? Number.parseFloat(r.mall_lat) : undefined,
+    mall_lon: r.mall_lon ? Number.parseFloat(r.mall_lon) : undefined,
   }));
 };
 
@@ -93,10 +200,19 @@ const MALL_COORD_OVERRIDES: Record<string, [number, number]> = {
 
 const buildPlaces = (spots: SpotRow[], generatedAt: string) => {
   const mallMap = new Map<string, { latSum: number; lonSum: number; count: number }>();
+  const mallCoords = new Map<string, { lat: number; lon: number }>();
   const lats: number[] = [];
   const lons: number[] = [];
 
   for (const spot of spots) {
+    const mallLat = spot.mall_lat;
+    const mallLon = spot.mall_lon;
+    if (mallLat !== undefined && !Number.isNaN(mallLat) && mallLon !== undefined && !Number.isNaN(mallLon)) {
+      if (!mallCoords.has(spot.mall_name)) {
+        mallCoords.set(spot.mall_name, { lat: mallLat, lon: mallLon });
+      }
+    }
+
     const lat = spot.stop_lat;
     const lon = spot.stop_lon;
     if (lat === undefined || Number.isNaN(lat)) continue;
@@ -109,6 +225,14 @@ const buildPlaces = (spots: SpotRow[], generatedAt: string) => {
     lats.push(lat);
     lons.push(lon);
   }
+
+  mallCoords.forEach((coord, name) => {
+    lats.push(coord.lat);
+    lons.push(coord.lon);
+    if (!mallMap.has(name)) {
+      mallMap.set(name, { latSum: coord.lat, lonSum: coord.lon, count: 1 });
+    }
+  });
 
   Object.entries(MALL_COORD_OVERRIDES).forEach(([name, [lat, lon]]) => {
     lats.push(lat);
@@ -139,9 +263,10 @@ const buildPlaces = (spots: SpotRow[], generatedAt: string) => {
   };
 
   const places = Array.from(mallMap.entries()).map(([name, entry]) => {
+    const explicit = mallCoords.get(name);
     const override = MALL_COORD_OVERRIDES[name];
-    const lat = override ? override[0] : entry.latSum / entry.count;
-    const lon = override ? override[1] : entry.lonSum / entry.count;
+    const lat = explicit?.lat ?? override?.[0] ?? entry.latSum / entry.count;
+    const lon = explicit?.lon ?? override?.[1] ?? entry.lonSum / entry.count;
     const x = ((lon - bounds.min_lon) / (bounds.max_lon - bounds.min_lon)) * 100;
     const y = ((bounds.max_lat - lat) / (bounds.max_lat - bounds.min_lat)) * 100;
     return {
@@ -232,6 +357,13 @@ const toEpochMillis = (seconds: any) => {
   return Number(seconds) * 1000;
 };
 
+const toEpochSeconds = (seconds: any) => {
+  if (seconds === null || seconds === undefined) return null;
+  const value = typeof seconds === 'number' ? seconds : Number(seconds);
+  if (!Number.isFinite(value)) return null;
+  return value;
+};
+
 const statusFromDelay = (delaySec: number) => {
   if (delaySec < 300) return 'low';
   if (delaySec < 600) return 'medium';
@@ -239,8 +371,176 @@ const statusFromDelay = (delaySec: number) => {
   return 'very_high';
 };
 
+const detectVisitorAirportDirection = (routeId: string | null): VisitorDirection | null => {
+  if (!routeId) return null;
+  if (VISITOR_AIRPORT_ROUTE_PATTERNS.to_airport.some((pattern) => pattern.test(routeId))) {
+    return 'to_airport';
+  }
+  if (VISITOR_AIRPORT_ROUTE_PATTERNS.from_airport.some((pattern) => pattern.test(routeId))) {
+    return 'from_airport';
+  }
+  return null;
+};
+
+const buildVisitorAirportLatest = (updatedAt: string, delays: number[]) => {
+  const med = median(delays);
+  if (med === null) {
+    return {
+      updated_at: updatedAt,
+      route_id: VISITOR_AIRPORT_ROUTE_ID,
+      route_name: VISITOR_AIRPORT_ROUTE_NAME,
+      status: 'unknown',
+      delay_sec: null,
+      note: '対象便のデータが不足しています',
+      predictions: {
+        h1_sec: null,
+        h3_sec: null,
+      },
+    };
+  }
+
+  let status = 'delayed';
+  let note = '10分以上の遅れが発生しています';
+  if (med < 300) {
+    status = 'on_time';
+    note = '概ね定刻で運行しています';
+  } else if (med < 600) {
+    status = 'slight_delay';
+    note = '最大10分程度の遅れが見込まれます';
+  }
+
+  return {
+    updated_at: updatedAt,
+    route_id: VISITOR_AIRPORT_ROUTE_ID,
+    route_name: VISITOR_AIRPORT_ROUTE_NAME,
+    status,
+    delay_sec: Math.round(med),
+    note,
+    predictions: {
+      h1_sec: null,
+      h3_sec: null,
+    },
+  };
+};
+
+const buildVisitorAirportStopsLatest = (
+  updatedAt: string,
+  delaysByDirection: Record<VisitorDirection, Record<string, number[]>>
+) => {
+  const buildDirection = (direction: VisitorDirection, label: string) => ({
+    label,
+    stops: VISITOR_AIRPORT_STOPS_BY_DIRECTION[direction].map((stop) => {
+      const med = median(delaysByDirection[direction][stop.stop_id] ?? []);
+      return {
+        stop_id: stop.stop_id,
+        stop_name: stop.stop_name,
+        delay_sec: med === null ? null : Math.round(med),
+      };
+    }),
+  });
+
+  return {
+    updated_at: updatedAt,
+    route_id: VISITOR_AIRPORT_ROUTE_ID,
+    route_name: VISITOR_AIRPORT_ROUTE_NAME,
+    directions: {
+      to_airport: buildDirection('to_airport', '空港行き'),
+      from_airport: buildDirection('from_airport', '市内行き'),
+    },
+  };
+};
+
+const getFreshDelaySec = (state: LastState, key: string, nowMs: number, maxAgeMs: number): number | null => {
+  const item = state.stops[key];
+  if (!item) return null;
+  const observedAtMs = Date.parse(item.observed_at);
+  if (Number.isNaN(observedAtMs)) return null;
+  if (nowMs - observedAtMs > maxAgeMs) return null;
+  return Math.max(0, Number(item.delay_sec));
+};
+
+const statusFromSpeed = (speedKmh: number | null, sampleCount: number): CommuteTrafficStatus => {
+  if (speedKmh === null) return 'unknown';
+  if (sampleCount < COMMUTE_TRAFFIC_MIN_SAMPLES) return 'unknown';
+  if (speedKmh <= COMMUTE_TRAFFIC_VERY_CONGESTED_KMH) return 'very_congested';
+  if (speedKmh <= COMMUTE_TRAFFIC_CONGESTED_KMH) return 'congested';
+  return 'smooth';
+};
+
+const extractCommuteSectionSpeed = (stopTimeUpdates: any[]): number | null => {
+  if (!Array.isArray(stopTimeUpdates) || stopTimeUpdates.length === 0) return null;
+
+  let fromTimeSec: number | null = null;
+  let toTimeSec: number | null = null;
+  let fromSeq: number | null = null;
+  let toSeq: number | null = null;
+
+  for (const stu of stopTimeUpdates) {
+    const stopId = stu?.stopId;
+    if (!stopId) continue;
+    const eventTimeSec = toEpochSeconds(stu?.arrival?.time ?? stu?.departure?.time ?? null);
+    if (eventTimeSec === null) continue;
+    if (stopId === COMMUTE_SECTION_FROM_STOP_ID) {
+      fromTimeSec = eventTimeSec;
+      fromSeq = stu?.stopSequence ?? null;
+    } else if (stopId === COMMUTE_SECTION_TO_STOP_ID) {
+      toTimeSec = eventTimeSec;
+      toSeq = stu?.stopSequence ?? null;
+    }
+  }
+
+  if (fromTimeSec === null || toTimeSec === null) return null;
+  if (fromSeq !== null && toSeq !== null && Number(toSeq) <= Number(fromSeq)) return null;
+
+  const travelSec = toTimeSec - fromTimeSec;
+  if (!(travelSec > 0 && travelSec <= 2 * 60 * 60)) return null;
+
+  return (COMMUTE_SECTION_DISTANCE_KM * 3600) / travelSec;
+};
+
+const buildCommuteSemiconLatest = (
+  updatedAt: string,
+  state: LastState,
+  nowMs: number,
+  maxAgeMs: number,
+  sectionSpeedSamples: number[]
+) => ({
+  updated_at: updatedAt,
+  area_id: COMMUTE_SEMICON_AREA_ID,
+  area_name: COMMUTE_SEMICON_AREA_NAME,
+  stops: COMMUTE_SEMICON_STOPS.map((stop) => {
+    const key = `${stop.operator}::${stop.stop_id}`;
+    const delaySec = getFreshDelaySec(state, key, nowMs, maxAgeMs);
+    return {
+      ...stop,
+      delay_sec: delaySec === null ? null : Math.round(delaySec),
+      predictions: {
+        h1_sec: null,
+        h3_sec: null,
+      },
+    };
+  }),
+  traffic: (() => {
+    const sampleCount = sectionSpeedSamples.length;
+    const avgSpeed = median(sectionSpeedSamples);
+    const roundedSpeed = avgSpeed === null ? null : Number(avgSpeed.toFixed(1));
+    return {
+      section_name: COMMUTE_SECTION_NAME,
+      from_stop_id: COMMUTE_SECTION_FROM_STOP_ID,
+      to_stop_id: COMMUTE_SECTION_TO_STOP_ID,
+      distance_km: COMMUTE_SECTION_DISTANCE_KM,
+      avg_speed_kmh: roundedSpeed,
+      status: statusFromSpeed(roundedSpeed, sampleCount),
+      sample_count: sampleCount,
+    } satisfies CommuteTraffic;
+  })(),
+});
+
 const latestJsonKey = `${silverPrefix}latest.json`;
 const latestDetailKey = `${silverPrefix}latest_detail.json`;
+const visitorAirportLatestKey = `${silverPrefix}visitor/airport_latest.json`;
+const visitorAirportStopsLatestKey = `${silverPrefix}visitor/airport_stops_latest.json`;
+const commuteSemiconLatestKey = `${silverPrefix}commute/semicon_latest.json`;
 
 export const handler = async () => {
   if (!dataBucket) {
@@ -262,6 +562,12 @@ export const handler = async () => {
 
   const delayByStop: Record<string, StopState> = {};
   const bronzeRows: any[] = [];
+  const visitorAirportDelays: number[] = [];
+  const visitorAirportStopDelaySamples: Record<VisitorDirection, Record<string, number[]>> = {
+    to_airport: {},
+    from_airport: {},
+  };
+  const commuteSectionSpeedSamples: number[] = [];
 
   for (const company of companies) {
     const latest = await listLatestTripUpdate(company, dates);
@@ -283,6 +589,25 @@ export const handler = async () => {
       const routeId = tripUpdate.trip?.routeId ?? null;
       const eventTimeMs =
         toEpochMillis(tripUpdate.timestamp ?? null) ?? feedTimestampMs ?? nowMs;
+      const commuteSectionSpeed = extractCommuteSectionSpeed(tripUpdate.stopTimeUpdate ?? []);
+      if (commuteSectionSpeed !== null) {
+        commuteSectionSpeedSamples.push(commuteSectionSpeed);
+        bronzeRows.push({
+          event_time: new Date(eventTimeMs),
+          ingest_time: now,
+          company,
+          feed_type: 'commute_section_speed',
+          trip_id: tripId,
+          route_id: routeId,
+          stop_id: COMMUTE_SECTION_TO_STOP_ID,
+          stop_sequence: null,
+          delay_sec: null,
+          section_from_stop_id: COMMUTE_SECTION_FROM_STOP_ID,
+          section_to_stop_id: COMMUTE_SECTION_TO_STOP_ID,
+          section_distance_km: COMMUTE_SECTION_DISTANCE_KM,
+          avg_speed_kmh: Number(commuteSectionSpeed.toFixed(3)),
+        });
+      }
 
       tripUpdate.stopTimeUpdate?.forEach((stu: any) => {
         const stopId = stu.stopId;
@@ -300,6 +625,20 @@ export const handler = async () => {
           delay_sec: delaySec,
           observed_at: toJstIso(eventTimeMs),
         };
+
+        if (company === VISITOR_AIRPORT_COMPANY) {
+          const visitorDirection = detectVisitorAirportDirection(routeId);
+          if (visitorDirection) {
+            if (visitorDirection === 'to_airport' && VISITOR_AIRPORT_STOP_IDS.has(stopId)) {
+              visitorAirportDelays.push(delaySec);
+            }
+            if (VISITOR_AIRPORT_STOP_ID_SET_BY_DIRECTION[visitorDirection].has(stopId)) {
+              const samples = visitorAirportStopDelaySamples[visitorDirection][stopId] ?? [];
+              samples.push(delaySec);
+              visitorAirportStopDelaySamples[visitorDirection][stopId] = samples;
+            }
+          }
+        }
 
         bronzeRows.push({
           event_time: new Date(eventTimeMs),
@@ -400,6 +739,43 @@ export const handler = async () => {
     })
   );
 
+  const visitorAirportLatest = buildVisitorAirportLatest(iso, visitorAirportDelays);
+  const visitorAirportStopsLatest = buildVisitorAirportStopsLatest(iso, visitorAirportStopDelaySamples);
+  const commuteSemiconLatest = buildCommuteSemiconLatest(
+    iso,
+    updatedState,
+    nowMs,
+    maxAgeMs,
+    commuteSectionSpeedSamples
+  );
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: dataBucket,
+      Key: visitorAirportLatestKey,
+      Body: JSON.stringify(visitorAirportLatest, null, 2),
+      ContentType: 'application/json',
+    })
+  );
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: dataBucket,
+      Key: visitorAirportStopsLatestKey,
+      Body: JSON.stringify(visitorAirportStopsLatest, null, 2),
+      ContentType: 'application/json',
+    })
+  );
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: dataBucket,
+      Key: commuteSemiconLatestKey,
+      Body: JSON.stringify(commuteSemiconLatest, null, 2),
+      ContentType: 'application/json',
+    })
+  );
+
   if (webBucket) {
     await s3.send(
       new PutObjectCommand({
@@ -418,6 +794,42 @@ export const handler = async () => {
         Bucket: webBucket,
         Key: 'data/latest_detail.json',
         Body: JSON.stringify({ updated_at: iso, malls: detail }, null, 2),
+        ContentType: 'application/json',
+        CacheControl: 'no-cache, no-store, must-revalidate',
+      })
+    );
+  }
+
+  if (webBucket) {
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: webBucket,
+        Key: 'data/visitor_airport_latest.json',
+        Body: JSON.stringify(visitorAirportLatest, null, 2),
+        ContentType: 'application/json',
+        CacheControl: 'no-cache, no-store, must-revalidate',
+      })
+    );
+  }
+
+  if (webBucket) {
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: webBucket,
+        Key: 'data/visitor_airport_stops_latest.json',
+        Body: JSON.stringify(visitorAirportStopsLatest, null, 2),
+        ContentType: 'application/json',
+        CacheControl: 'no-cache, no-store, must-revalidate',
+      })
+    );
+  }
+
+  if (webBucket) {
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: webBucket,
+        Key: 'data/commute_semicon_latest.json',
+        Body: JSON.stringify(commuteSemiconLatest, null, 2),
         ContentType: 'application/json',
         CacheControl: 'no-cache, no-store, must-revalidate',
       })

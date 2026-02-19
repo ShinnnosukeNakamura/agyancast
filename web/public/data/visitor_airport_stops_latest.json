@@ -1,0 +1,137 @@
+{
+  "updated_at": "2026-02-18T08:30:00+09:00",
+  "route_id": "aso_airport_limousine",
+  "route_name": "阿蘇くまもと空港リムジンバス",
+  "directions": {
+    "to_airport": {
+      "label": "空港行き",
+      "stops": [
+        {
+          "stop_id": "100002_6",
+          "stop_name": "熊本桜町バスターミナル(6番のりば)",
+          "delay_sec": 150
+        },
+        {
+          "stop_id": "100003_2",
+          "stop_name": "通町筋",
+          "delay_sec": 172
+        },
+        {
+          "stop_id": "100715_2",
+          "stop_name": "味噌天神",
+          "delay_sec": 194
+        },
+        {
+          "stop_id": "100572_2",
+          "stop_name": "水前寺公園前",
+          "delay_sec": 216
+        },
+        {
+          "stop_id": "100183_2",
+          "stop_name": "熊本県庁前",
+          "delay_sec": 238
+        },
+        {
+          "stop_id": "102664_2",
+          "stop_name": "自衛隊前",
+          "delay_sec": 260
+        },
+        {
+          "stop_id": "103922_2",
+          "stop_name": "東町中央",
+          "delay_sec": 282
+        },
+        {
+          "stop_id": "104244_2",
+          "stop_name": "益城インター口 P",
+          "delay_sec": 304
+        },
+        {
+          "stop_id": "102177_2",
+          "stop_name": "グランメッセ前",
+          "delay_sec": 326
+        },
+        {
+          "stop_id": "103333_2",
+          "stop_name": "臨空テクノパーク西",
+          "delay_sec": 348
+        },
+        {
+          "stop_id": "103319_2",
+          "stop_name": "臨空テクノパーク東",
+          "delay_sec": 370
+        },
+        {
+          "stop_id": "102112_1",
+          "stop_name": "阿蘇くまもと空港(乗車：4番のりば　※特快バスは3番のりば)",
+          "delay_sec": 392
+        }
+      ]
+    },
+    "from_airport": {
+      "label": "市内行き",
+      "stops": [
+        {
+          "stop_id": "102112_4",
+          "stop_name": "阿蘇くまもと空港(降車：4番のりば)",
+          "delay_sec": 190
+        },
+        {
+          "stop_id": "103319_1",
+          "stop_name": "臨空テクノパーク東",
+          "delay_sec": 210
+        },
+        {
+          "stop_id": "103333_1",
+          "stop_name": "臨空テクノパーク西",
+          "delay_sec": 230
+        },
+        {
+          "stop_id": "102177_1",
+          "stop_name": "グランメッセ前",
+          "delay_sec": 250
+        },
+        {
+          "stop_id": "104244_1",
+          "stop_name": "益城インター口 P",
+          "delay_sec": 270
+        },
+        {
+          "stop_id": "103922_1",
+          "stop_name": "東町中央",
+          "delay_sec": 290
+        },
+        {
+          "stop_id": "102664_1",
+          "stop_name": "自衛隊前",
+          "delay_sec": 310
+        },
+        {
+          "stop_id": "100183_1",
+          "stop_name": "熊本県庁前",
+          "delay_sec": 330
+        },
+        {
+          "stop_id": "100572_1",
+          "stop_name": "水前寺公園前",
+          "delay_sec": 350
+        },
+        {
+          "stop_id": "100715_1",
+          "stop_name": "味噌天神",
+          "delay_sec": 370
+        },
+        {
+          "stop_id": "100003_1",
+          "stop_name": "通町筋",
+          "delay_sec": 390
+        },
+        {
+          "stop_id": "100002_9",
+          "stop_name": "熊本桜町バスターミナル(9番のりば)",
+          "delay_sec": 410
+        }
+      ]
+    }
+  }
+}

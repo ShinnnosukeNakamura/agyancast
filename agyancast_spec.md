@@ -243,6 +243,61 @@ section_stats_hourly
 - `data/latest.json` は Silver の最新スナップショットから生成し、フロントが参照する
 - `data/latest_detail.json` は遅延秒などの補足情報を含める
 - `data/places.json` は `spots.csv` から生成する（`scripts/build_assets.py` を実行）
+- `data/visitor_airport_latest.json` は来訪タブ（空港リムジンの現在遅延）に利用する
+- `data/visitor_airport_daily.json` は来訪タブ（当日時間帯別遅延）に利用する
+
+### 8.1.1 来訪タブ（阿蘇くまもと空港リムジン）データ仕様
+
+- 対象会社: `sankobus`
+- 対象停留所（阿蘇くまもと空港）: `102112_1`, `102112_3`, `102112_4`, `102112_5`
+- 対象系統（空港行きAP系）
+  - AP-3（西部車庫系）: `route_id` が `721_721040_` / `721_721050_` で始まる便
+  - AP-2（熊本駅系）: `route_id` が `721_721070_` で始まる便
+  - AP-1（桜町BT系・空港特別快速便）: `route_id` が `721_721060_` で始まる便
+- 判定は `route_id` の prefix マッチで行う（ダイヤ改定時の末尾日付変更を許容）
+- 遅延値は GTFS-RT `TripUpdate.stop_time_update` の `arrival.delay` を優先し、
+  欠損時は `departure.delay` を使用する
+
+`data/visitor_airport_latest.json`（必須）
+
+- `updated_at`
+- `route_id`（固定値: `aso_airport_limousine`）
+- `route_name`（固定値: `阿蘇くまもと空港リムジンバス`）
+- `status`（`on_time` / `slight_delay` / `delayed` / `suspended` / `unknown`）
+- `delay_sec`
+- `note`
+- `predictions.h1_sec`
+- `predictions.h3_sec`
+
+`visitor_airport_latest.status` 算出基準（初期実装）
+
+- サンプルなし: `unknown`
+- 遅延中央値 `< 300秒`: `on_time`
+- 遅延中央値 `< 600秒`: `slight_delay`
+- 遅延中央値 `>= 600秒`: `delayed`
+- `suspended` は将来、運休判定ロジック導入時に使用
+- 予測値 `h1_sec` / `h3_sec` は現時点では `null` 固定
+
+`data/visitor_airport_daily.json`（推奨）
+
+- `date`
+- `timezone`
+- `route_id`
+- `route_name`
+- `hours`（`00`〜`23`）
+- `delay_min`（要素数24、欠損は `null`）
+
+`visitor_airport_daily.delay_min` 算出基準（初期実装）
+
+- Bronze (`company=sankobus`) から対象系統・対象停留所を抽出
+- JST時刻で時間帯（`00`〜`23`）に集約
+- 各時間帯の遅延秒中央値を分に変換して格納
+- データなしの時間帯は `null`
+
+出力保証
+
+- データ欠損時でも `visitor_airport_latest.json` / `visitor_airport_daily.json` は出力する
+- 欠損時は `status=unknown`、`delay_sec=null`、`delay_min` は `null` 配列で返す
 
 表示例： 「本日17-19時 市中心部 あーぎゃん度：強」
 
