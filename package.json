@@ -1,0 +1,23 @@
+{
+  "name": "agyancast",
+  "version": "1.0.0",
+  "description": "熊本市内のバス遅延から **街の混雑感** を推定し、 モール周辺の混雑を「天気予報のように」直感的に可視化するプロジェクトです。",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShinnnosukeNakamura/agyancast.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ShinnnosukeNakamura/agyancast/issues"
+  },
+  "homepage": "https://github.com/ShinnnosukeNakamura/agyancast#readme",
+  "devDependencies": {
+    "zenn-cli": "^0.4.5"
+  }
+}

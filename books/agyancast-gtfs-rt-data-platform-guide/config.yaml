@@ -1,0 +1,22 @@
+title: "GTFS-RTで作る地域混雑可視化入門"
+summary: "熊本のバスオープンデータを使って、GTFS/GTFS-RTの基礎から混雑可視化MVPまでを初学者向けに解説します。"
+topics: ["gtfs", "gtfs-rt", "aws", "dataplatform", "python"]
+published: false
+price: 0
+toc_depth: 2
+chapters:
+  - 00-readme
+  - 01-problem
+  - 02-setup-zenn
+  - 03-gtfs-overview
+  - 04-gtfs-static-format
+  - 05-gtfs-realtime-overview
+  - 06-tripupdate-practice
+  - 07-mvp-scope
+  - 08-architecture
+  - 09-transform-logic
+  - 10-data-products
+  - 11-cost-ops
+  - 12-learning
+  - 13-roadmap
+  - 14-glossary
