@@ -8,8 +8,8 @@ title: "今回仕様で使うデータ範囲を確定する"
 
 GTFS-RTの取得対象は4事業者 × 3種（TripUpdate / VehiclePosition / Alert）です。
 
-- 参照: `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/agyancast_spec.md`
-- 取得実装: `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lambda/ingest.ts`
+- 参照: `agyancast_spec.md`
+- 取得実装: `infra/lambda/ingest.ts`
 
 ## 2. MVP判定に使う最小セット
 
@@ -26,7 +26,7 @@ GTFS-RTの取得対象は4事業者 × 3種（TripUpdate / VehiclePosition / Ale
 
 `spots.csv` で、商業施設に関連する停留所だけを対象にします。
 
-- ファイル: `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/spots.csv`
+- ファイル: `spots.csv`
 - 突合キー: `(company, stop_id)`
 
 この絞り込みが、交通データを「買物混雑」へ翻訳するコアです。

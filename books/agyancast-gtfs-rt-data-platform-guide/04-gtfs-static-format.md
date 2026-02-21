@@ -6,9 +6,9 @@ title: "GTFS static詳細: どのファイルのどの列を使うか"
 
 参照:
 
-- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/GTFS/kumabus/stops.txt`
-- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/GTFS/kumabus/trips.txt`
-- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/GTFS/kumabus/stop_times.txt`
+- `GTFS/kumabus/stops.txt`
+- `GTFS/kumabus/trips.txt`
+- `GTFS/kumabus/stop_times.txt`
 
 ## 1. ファイル関係
 
@@ -69,7 +69,7 @@ flowchart LR
 
 `spots.csv` で、対象停留所を明示的に絞ります。
 
-- 参照: `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/spots.csv`
+- 参照: `spots.csv`
 - キー: `(company, stop_id)`
 
 この1段を入れることで、仕様理解とプロダクト要件が接続されます。

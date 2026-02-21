@@ -6,7 +6,7 @@ title: "配信データ詳細: 画面でどう使うか"
 
 例:
 
-- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/web/public/data/latest.json`
+- `web/public/data/latest.json`
 
 構造:
 
@@ -28,7 +28,7 @@ title: "配信データ詳細: 画面でどう使うか"
 
 例:
 
-- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/web/public/data/daily_delay.json`
+- `web/public/data/daily_delay.json`
 
 構造の要点:
 

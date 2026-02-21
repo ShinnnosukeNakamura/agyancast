@@ -8,7 +8,7 @@ title: "BIN→JSON実装: どうパースして保存しているか"
 
 まず `ingest.ts` で12フィードを取得し、S3 Rawにそのまま置きます。
 
-- 実装: `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lambda/ingest.ts`
+- 実装: `infra/lambda/ingest.ts`
 - 保存先: `raw/company=.../dt=.../hour=.../minute=.../*.bin`
 
 ここでは**パースしません**。生データ保持を優先します。
@@ -56,7 +56,7 @@ feed.entity.forEach((entity: any) => {
 
 実際のサンプル（抜粋）:
 
-- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/samples/daily_delay/bronze/dt=2026-02-14/hour=09/part-2026-02-14-0900.jsonl`
+- `samples/daily_delay/bronze/dt=2026-02-14/hour=09/part-2026-02-14-0900.jsonl`
 
 ```json
 {"event_time":"2026-02-14T00:00:15.000Z","ingest_time":"2026-02-14T00:00:33.268Z","company":"kumabus","feed_type":"trip_update","trip_id":"2_388_20260109","route_id":"1_1313_2_20260109","stop_id":"100002_1","stop_sequence":1,"delay_sec":14}

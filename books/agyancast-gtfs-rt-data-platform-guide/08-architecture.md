@@ -44,7 +44,7 @@ flowchart TD
 
 CDKではEventBridgeで10分おき実行（JST 05:00〜23:50）です。
 
-- 参照: `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lib/agyancast-data-stack.ts`
+- 参照: `infra/lib/agyancast-data-stack.ts`
 
 ## 5. この構成にした理由
 

@@ -33,18 +33,18 @@ title: "この本の狙いと読み方"
 
 リポジトリ:
 
-- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast`
+- [ShinnnosukeNakamura/agyancast](https://github.com/ShinnnosukeNakamura/agyancast/tree/main)
 
 中心となるコード:
 
-- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lambda/ingest.ts`
-- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lambda/transform.ts`
-- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lambda_py/daily_delay_mart/handler.py`
+- `infra/lambda/ingest.ts`
+- `infra/lambda/transform.ts`
+- `infra/lambda_py/daily_delay_mart/handler.py`
 
 仕様メモ:
 
-- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/agyancast_spec.md`
-- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/bus_realtime_data_platform_spec.md`
+- `agyancast_spec.md`
+- `bus_realtime_data_platform_spec.md`
 
 ## 読み終えた時のゴール
 
@@ -54,4 +54,3 @@ title: "この本の狙いと読み方"
 - 今回の仕様で「どのファイルのどの列」を使っているか
 - BINデータをどう取り込み、どうJSONL化しているか
 - なぜこのしきい値・補完ルールを採用したか
-

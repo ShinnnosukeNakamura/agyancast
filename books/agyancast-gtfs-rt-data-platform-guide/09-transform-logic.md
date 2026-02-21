@@ -4,7 +4,7 @@ title: "transform.ts徹底解説: 判定ロジックと補完"
 
 対象コード:
 
-- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lambda/transform.ts`
+- `infra/lambda/transform.ts`
 
 ## 1. 最新TripUpdateを会社ごとに選ぶ
 
