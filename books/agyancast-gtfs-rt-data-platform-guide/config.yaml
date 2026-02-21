@@ -1,6 +1,6 @@
 title: "GTFS-RTで作る地域混雑可視化入門"
-summary: "熊本のバスオープンデータを使って、GTFS/GTFS-RTの基礎から混雑可視化MVPまでを初学者向けに解説します。"
-topics: ["gtfs", "gtfs-rt", "aws", "dataplatform", "python"]
+summary: "agyancastで実際に作ったデータ基盤を題材に、GTFS/GTFS-RTのフォーマット理解からBINデータ処理、混雑可視化MVPの設計判断までを詳しく解説します。"
+topics: ["gtfs", "gtfs-rt", "aws", "dataplatform", "opendata"]
 published: false
 price: 0
 toc_depth: 2

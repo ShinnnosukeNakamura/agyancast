@@ -1,66 +1,71 @@
 ---
-title: "GTFS-RTとは何か: リアルタイム情報の基本"
+title: "GTFS-RT詳細: BINの中身はどうなっているか"
 ---
 
-## GTFS-RTを一言でいうと
+この章では、`*.bin` を「なんとなくの黒箱」にせず、構造を押さえます。
 
-GTFS-RTは、GTFS（静的時刻表）を補うリアルタイム拡張です。
+## 1. GTFS-RT BINはProtocol Buffers
 
-- 遅延（TripUpdate）
-- 車両位置（VehiclePosition）
-- 運行障害情報（Alert）
+配信される `trip_update.bin` などは、Protocol Buffersでシリアライズされたバイナリです。
 
-公式仕様:
+特徴:
 
-- [https://gtfs.org/documentation/realtime/reference/](https://gtfs.org/documentation/realtime/reference/)
+- JSONやCSVより軽量
+- 厳密なスキーマ（message定義）で送受信
+- 受け側は同じスキーマでデコードする必要がある
 
-## データ形式はProtocol Buffers
+## 2. 主要メッセージ階層
 
-GTFS-RTの実体は、CSVではなくProtocol Buffers（バイナリ）です。
-
-- 例: `*_trip_update.bin`
-- 小さく高速に送受信できる
-- デコードには定義ファイルに対応したライブラリが必要
-
-## メッセージ構造の最小理解
-
-GTFS-RTは次の入れ子を理解すれば読めます。
+GTFS-RT Referenceで定義される基本構造は次です。
 
 ```text
 FeedMessage
-  ├─ FeedHeader
-  └─ FeedEntity[]
-       ├─ trip_update (TripUpdate)
-       ├─ vehicle (VehiclePosition)
-       └─ alert (Alert)
+  - header: FeedHeader
+  - entity[]: FeedEntity
+      - trip_update: TripUpdate
+      - vehicle: VehiclePosition
+      - alert: Alert
 ```
 
-重要点:
+今回のMVPは、主に `trip_update` を使っています。
 
-- `FeedHeader.timestamp` は「このフィードが作られた時刻」
-- `FeedEntity` は1件ずつのリアルタイム情報
-- 実装では `entity.tripUpdate` があるかをまず判定する
+## 3. TripUpdateで見るフィールド
 
-## GTFSとGTFS-RTの関係
+今回の実装で使う主項目:
 
-GTFS-RTは単独では意味が薄いです。`trip_id` や `stop_id` の意味は静的GTFS側にあります。
+- `trip.tripId`
+- `trip.routeId`
+- `timestamp`
+- `stopTimeUpdate[].stopId`
+- `stopTimeUpdate[].stopSequence`
+- `stopTimeUpdate[].arrival.delay`
+- `stopTimeUpdate[].departure.delay`
 
-```mermaid
-flowchart LR
-  A["GTFS static\n(stops/trips/stop_times)"] --> C["IDの意味づけ"]
-  B["GTFS-RT\n(TripUpdate/VehiclePosition/Alert)"] --> C
-  C --> D["ユーザー向け表示"]
-```
+理由:
 
-## 本プロジェクトで使っているフィード
+- `stopId` と `delay` が混雑代理指標の最短経路
+- `timestamp` が鮮度判定に必要
+- `routeId` が空港/通勤系の判定に使える
 
-`agyancast` では熊本4社ぶんを取得しています（TripUpdate/VehiclePosition/Alert）。
+## 4. delayの扱い（今回仕様）
 
-- 産交バス
-- 熊本電鉄バス
-- 熊本バス
-- 熊本都市バス
+仕様上は `delay` は正負を取り得ますが、このMVPでは次のルールに統一しています。
 
-実エンドポイント一覧は `agyancast_spec.md` の「3. GTFS-RT エンドポイント一覧」を参照。
+- `arrival.delay` 優先、無ければ `departure.delay`
+- `Math.max(0, delay)` で負値を0扱い
 
-次章で、今回のMVPで中核になるTripUpdateを深掘りします。
+この判断は「混雑度指標として単調に扱う」ためです。
+
+## 5. 他メッセージの扱い
+
+- `VehiclePosition`: 通勤区間の速度算出に一部利用
+- `Alert`: 取得・保存はしているが、MVPの主判定には未使用
+
+つまり、データ収集は広く、MVP判定は狭くしています。
+
+## 6. 参考
+
+- GTFS Realtime Reference: [https://gtfs.org/documentation/realtime/reference/](https://gtfs.org/documentation/realtime/reference/)
+- Google GTFS Realtime Overview: [https://developers.google.com/transit/gtfs-realtime](https://developers.google.com/transit/gtfs-realtime)
+
+次章で、実際にこのBINをどう処理してJSONLへ落としているかをコードと一緒に説明します。

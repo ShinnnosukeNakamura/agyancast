@@ -1,54 +1,60 @@
 ---
-title: "GTFSとは何か: 全体像をつかむ"
+title: "GTFS全体像: 種類と役割"
 ---
 
-## GTFSを一言でいうと
+## GTFSには大きく2種類ある
 
-GTFS（General Transit Feed Specification）は、公共交通の時刻表と路線情報を機械可読で配布するための標準形式です。
+このプロジェクトで使うGTFS系データは2種類です。
 
-- 形式は主にCSV（`.txt`）
-- 配布はzipが一般的
-- 静的（予定）情報を扱う
+1. GTFS static（静的）
+2. GTFS-RT（リアルタイム）
 
-公式仕様:
+### GTFS static
 
-- [https://gtfs.org/documentation/schedule/reference/](https://gtfs.org/documentation/schedule/reference/)
+- 配布形式: zip（中身はCSV相当の `.txt`）
+- 役割: 予定情報（停留所、路線、時刻表）
 
-## なぜGTFSが重要か
+### GTFS-RT
 
-アプリ側は、交通事業者ごとに異なる独自形式を読む必要がなくなります。
+- 配布形式: `.bin`（Protocol Buffers）
+- 役割: 実績/予測のリアルタイム情報（遅延、車両位置、運行障害）
 
-- `stops.txt` を見れば停留所がわかる
-- `trips.txt` と `stop_times.txt` を見れば便の時系列がわかる
-- `routes.txt` で路線のまとまりがわかる
+## この2つがどう噛み合うか
 
-つまり「最低限同じ読み方ができる」ことが価値です。
+GTFS-RTだけではIDの意味が薄く、GTFS staticだけでは現在状況が見えません。
+両方を接続してはじめて価値が出ます。
 
-## GTFSは「静的」データ
+```mermaid
+flowchart LR
+  A["GTFS static\n(stops/trips/stop_times)"] --> C["IDの意味づけ"]
+  B["GTFS-RT\n(TripUpdate/VehiclePosition/Alert)"] --> C
+  C --> D["混雑可視化"]
+```
 
-ここで大事なのは、GTFS単体ではリアルタイム遅延は直接わからない点です。
+## 今回の仕様で実際に使う範囲
 
-- GTFS: 予定時刻・路線・停留所などの土台
-- GTFS-RT: 現在の遅延や車両位置などのリアルタイム
+### static側
 
-今回のMVPでは、この2つを組み合わせます。
+- `stops.txt`: `stop_id`, `stop_name`, `stop_lat`, `stop_lon`
+- `trips.txt`: `trip_id`, `route_id`
+- `stop_times.txt`: `trip_id`, `stop_id`, `stop_sequence`, `arrival_time`, `departure_time`
 
-## 本プロジェクトでの位置づけ
+### realtime側
 
-`agyancast` では、GTFSを次の用途で使っています。
+- `FeedHeader.timestamp`
+- `TripUpdate.trip.tripId`
+- `TripUpdate.trip.routeId`
+- `TripUpdate.stopTimeUpdate[].stopId`
+- `TripUpdate.stopTimeUpdate[].arrival.delay`
+- `TripUpdate.stopTimeUpdate[].departure.delay`
+- `TripUpdate.timestamp`
 
-- 停留所や路線の基準データ
-- GTFS-RT `stop_id` を人間向け地名へ解釈するための土台
-- `spots.csv`（モール関連停留所マスタ）との整合確認
+## ここでの実務上のポイント
 
-## GTFSで最初に覚えるべき5ファイル
+今回のMVPは「使うフィールドを狭く固定」したのがポイントです。
 
-初学者は、まず次の5つだけ押さえると全体が見えます。
+- 仕様を広く読みすぎて実装を重くしない
+- まずは安定運用できる最小セットで成立させる
+- 後でフィールド追加できる構造にしておく
 
-- `agency.txt`: 事業者
-- `stops.txt`: 停留所
-- `routes.txt`: 路線
-- `trips.txt`: 便（ある日のある走行）
-- `stop_times.txt`: 便ごとの停車時刻列
-
-次章では、これらの関係を `agyancast` の実データを使って具体的に見ます。
+次章で、GTFS staticのファイル関係を実データで確認します。

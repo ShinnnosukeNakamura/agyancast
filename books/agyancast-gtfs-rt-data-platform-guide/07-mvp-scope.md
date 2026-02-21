@@ -1,44 +1,51 @@
 ---
-title: "MVPの仕様: いま何を作っていて何を作らないか"
+title: "今回仕様で使うデータ範囲を確定する"
 ---
 
-## MVPで作るもの
+この章では「どこまで使うか」を具体化します。
 
-このフェーズで実装したのは次です。
+## 1. 入力データ（実運用）
 
-- 10分間隔でGTFS-RTを取得
-- 遅延データを蓄積（Raw/Bronze/Silver）
-- モールごとの混雑ステータス生成
-- 当日推移（日次マート）生成
-- Web向けJSONを出力
+GTFS-RTの取得対象は4事業者 × 3種（TripUpdate / VehiclePosition / Alert）です。
 
-## あえて作らないもの
+- 参照: `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/agyancast_spec.md`
+- 取得実装: `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lambda/ingest.ts`
 
-最初から全部作ると運用不能になるため、以下は後回しです。
+## 2. MVP判定に使う最小セット
 
-- 複雑な予測モデル
-- 高度な重複排除テーブル（Icebergなど）
-- 経路探索最適化
+混雑ステータス判定に使うのは次だけです。
 
-これは「段階的に価値を出す」ための戦略です。
+- `company`
+- `stop_id`
+- `delay_sec`
+- `event_time`
 
-## このMVPの出力
+`trip_id` や `route_id` は補助（通勤・来訪派生）で利用します。
 
-ユーザー視点では次が出ます。
+## 3. spots.csvによる対象絞り込み
 
-- 現在の混雑ラベル（`low`/`medium`/`high`/`very_high`）
-- モール別の遅延秒
-- 日次グラフ（時間帯推移）
-- 通勤・来訪向け派生データ
+`spots.csv` で、商業施設に関連する停留所だけを対象にします。
 
-## なぜこの切り方がよいか
+- ファイル: `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/spots.csv`
+- 突合キー: `(company, stop_id)`
 
-- データ取得が不安定でも、履歴再処理で立て直せる
-- UIはJSON契約で独立して開発できる
-- 予測を追加しても、既存の観測・可視化を壊さない
+この絞り込みが、交通データを「買物混雑」へ翻訳するコアです。
 
-## 実装の参照先
+## 4. 集計単位
 
-- 仕様: `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/agyancast_spec.md`
-- データ基盤: `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/bus_realtime_data_platform_spec.md`
-- スライド原稿: `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/slides/lt_20260307_gyancast.md`
+- 停留所遅延 → モール単位
+- 集約統計 → 中央値
+- 更新間隔 → 10分
+
+中央値にした理由:
+
+- 一部便の極端値で判定が振れすぎない
+- 平均より体感に近い挙動を得やすい
+
+## 5. 出力（MVP）
+
+- `latest.json`: モール別ステータス
+- `latest_detail.json`: 遅延秒やサンプル数
+- `daily_delay.json`: 日内推移
+
+これで「今」と「今日の流れ」が見えるようになります。

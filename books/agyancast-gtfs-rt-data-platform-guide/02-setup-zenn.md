@@ -1,75 +1,60 @@
 ---
-title: "執筆環境: Zenn本のセットアップ"
+title: "設計方針: どういう考えで作ったか"
 ---
 
-この章は、Zennアカウントを作った直後の方向けに、最短で執筆を始める手順を整理したものです。
+この章は、実装前に決めた設計原則を整理します。
 
-## 1. 先に理解しておくこと
+## 原則1: 元データを必ず残す
 
-Zenn本は「Webエディタに直接書く」より、次の運用が実務的です。
+リアルタイムデータ処理は、最初の実装で100%正解にするのが難しいです。
+そのため、`raw/*.bin` を必ず保存します。
 
-- ローカルでMarkdownを書く
-- GitHubにpushする
-- Zennが同期して公開する
+- 変換ロジックを後から直せる
+- 誤判定時に再計算できる
+- 仕様理解が深まった時に再利用できる
 
-つまり、Zenn本は「Git管理されるドキュメント」です。
+## 原則2: 欠損を前提にする
 
-## 2. Node.jsのバージョンを合わせる
+GTFS-RTは実運用データなので、次が普通に起きます。
 
-2026-02-21 時点で `zenn-cli@0.4.5` は `Node.js >= 22` が必要です。
+- 一部フィールドの欠損
+- 一時的な取得失敗
+- 停留所ごとのデータばらつき
 
-このリポジトリでは `.nvmrc` を `22` にしています。次を実行します。
+そこで「欠損しない前提」は捨て、補完ルールを明示しました。
 
-```bash
-cd /Users/nakamurashinnosuke/Documents/GitHub/agyancast
-nvm install 22
-nvm use 22
-node -v
-```
+- キー: `(company, stop_id)`
+- 直近値補完の有効期限: 3時間
 
-## 3. Zenn CLIを導入する
+## 原則3: 使うデータを明示的に絞る
 
-```bash
-cd /Users/nakamurashinnosuke/Documents/GitHub/agyancast
-npm init -y
-npm install -D zenn-cli@latest
-npx zenn init
-```
+GTFS/GTFS-RTは情報量が多いため、MVPでは使う項目を明示しました。
 
-これで `books/` ディレクトリが使える状態になります。
+- 主要入力: `TripUpdate.stop_time_update.stop_id` と `delay`
+- モール紐づけ: `spots.csv`
+- 集約: 停留所遅延の中央値
 
-## 4. 本を作る
+「今使わないフィールド」を決めると、実装が安定します。
 
-```bash
-npx zenn new:book \
-  --slug agyancast-gtfs-rt-data-platform-guide \
-  --title "GTFS-RTで作る地域混雑可視化入門" \
-  --published false \
-  --price 0
-```
+## 原則4: 画面都合と分析都合を分ける
 
-- `published: false` の間は下書き
-- `published: true` で公開対象
+同じデータでも用途が違うため、出力を分けています。
 
-## 5. ローカルプレビュー
+- 画面向け: `latest.json` などの軽量JSON
+- 分析向け: `daily_delay` のParquet
 
-```bash
-npx zenn preview
-```
+これでフロントと分析の変更が衝突しにくくなります。
 
-ブラウザで `http://localhost:8000` を開き、見た目を確認しながら書きます。
+## 原則5: 予測は“最後に載せる”
 
-## 6. 公開フロー
+予測は魅力的ですが、基盤が弱い状態で載せると保守不能になります。
 
-1. ZennとGitHubリポジトリを連携
-2. `config.yaml` で `published: true` にする
-3. 連携ブランチにpush
-4. ZennのDeploy履歴で同期結果を確認
+順番は次です。
 
-## 公式ドキュメント
+1. 取得
+2. 変換
+3. 可視化
+4. 履歴蓄積
+5. 予測
 
-- Zenn GitHub連携: [https://zenn.dev/zenn/articles/connect-to-github](https://zenn.dev/zenn/articles/connect-to-github)
-- Zenn CLIガイド: [https://zenn.dev/zenn/articles/zenn-cli-guide](https://zenn.dev/zenn/articles/zenn-cli-guide)
-- Zenn CLI導入: [https://zenn.dev/zenn/articles/install-zenn-cli](https://zenn.dev/zenn/articles/install-zenn-cli)
-
-この章が終わった時点で、執筆環境は整っています。次章からデータ仕様に入ります。
+この順番が、今回の最重要判断でした。

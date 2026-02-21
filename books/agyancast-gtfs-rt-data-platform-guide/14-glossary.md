@@ -1,51 +1,49 @@
 ---
-title: "用語集: GTFS/GTFS-RTの最低限"
+title: "用語集"
 ---
 
-## GTFS
+## GTFS static
 
-公共交通の静的データ仕様。CSVベースで、停留所・路線・時刻表を扱う。
+公共交通の予定情報（停留所、路線、時刻表）を表す仕様。通常はzip内のCSV系テキストで配布される。
 
 ## GTFS-RT
 
-GTFSのリアルタイム拡張。protobufベースで、遅延・車両位置・運行障害を扱う。
+GTFS staticを補うリアルタイム仕様。protobufバイナリ（`.bin`）で遅延や車両位置を配信する。
 
-## trip_id
+## Protocol Buffers
 
-1つの運行便を識別するID。`trips.txt` と GTFS-RT の双方で重要。
+スキーマ駆動のバイナリシリアライズ形式。今回の `*_trip_update.bin` の実体。
 
-## stop_id
+## FeedMessage
 
-停留所識別子。`stops.txt` に定義され、`stop_times.txt` や GTFS-RT から参照される。
+GTFS-RTのルートメッセージ。`header` と `entity[]` を持つ。
 
 ## TripUpdate
 
-GTFS-RTのメッセージ種別。便の遅延や停留所ごとの予測情報を持つ。
+便の進捗・遅延を表すGTFS-RTメッセージ。今回の混雑判定の主入力。
 
-## VehiclePosition
+## stop_time_update
 
-GTFS-RTのメッセージ種別。車両の現在位置、速度、向きなどを持つ。
+TripUpdate内の停留所単位更新。`stopId` と `arrival/departure delay` を持つ。
 
-## Alert
+## delay
 
-GTFS-RTのメッセージ種別。運休、遅延、障害などの運行情報を持つ。
+予定との差分秒。今回のMVPでは負値を0に丸めて混雑代理指標に使う。
 
 ## Raw / Bronze / Silver
 
-- Raw: 元データ保管
-- Bronze: 構造化イベントログ
-- Silver: 配信・分析向けに整形した層
+- Raw: 元バイナリ保管
+- Bronze: 構造化イベントログ（JSONL）
+- Silver: 配信・分析向け整形データ
+
+## spots.csv
+
+モールと停留所を結ぶマスタ。`(company, stop_id)` をキーに集計対象を定義する。
 
 ## median（中央値）
 
-値を並べたときの中央。外れ値に強く、混雑評価の基礎に使いやすい。
+外れ値に強い代表値。モール単位遅延の集約に使用。
 
 ## nowcast
 
-短時間先の予測。ここでは「1時間先程度の混雑見込み」を指す。
-
-## 参考リンク
-
-- GTFS Schedule Reference: [https://gtfs.org/documentation/schedule/reference/](https://gtfs.org/documentation/schedule/reference/)
-- GTFS Realtime Reference: [https://gtfs.org/documentation/realtime/reference/](https://gtfs.org/documentation/realtime/reference/)
-- GTFS Realtime Overview (Google): [https://developers.google.com/transit/gtfs-realtime](https://developers.google.com/transit/gtfs-realtime)
+短時間先（例: 1時間先）の予測。将来フェーズで追加予定。

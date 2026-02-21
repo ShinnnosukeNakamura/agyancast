@@ -1,81 +1,78 @@
 ---
-title: "TripUpdate実践: delayはどう読むべきか"
+title: "BIN→JSON実装: どうパースして保存しているか"
 ---
 
-この章は、MVPの心臓部です。
+この章は、質問の核心である「BINをどう扱っているか」を実装ベースで説明します。
 
-## 1. まず何を見るか
+## 1. ingest段階ではBINをそのまま保存
 
-`agyancast` の初期実装は、TripUpdateの次を使っています。
+まず `ingest.ts` で12フィードを取得し、S3 Rawにそのまま置きます。
 
-- `stop_time_update[].stop_id`
-- `stop_time_update[].arrival.delay`
-- （欠損時）`stop_time_update[].departure.delay`
+- 実装: `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lambda/ingest.ts`
+- 保存先: `raw/company=.../dt=.../hour=.../minute=.../*.bin`
 
-実コード（抜粋元）:
+ここでは**パースしません**。生データ保持を優先します。
 
-- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lambda/transform.ts`
+## 2. transform段階でBINをデコード
 
-```ts
-const delay =
-  stu.arrival?.delay ??
-  stu.departure?.delay ??
-  null;
-```
-
-## 2. delayの意味
-
-GTFS-RT仕様上、`delay` は秒単位の予定差です。
-
-- 正: 遅れ
-- 負: 早着（理論上あり得る）
-- 0: 定刻
-
-ただしこのMVPでは、混雑指標として扱う都合で負値を0に丸めています。
+`transform.ts` で最新 `trip_update.bin` を読み、protobufをオブジェクト化します。
 
 ```ts
-const delaySec = Math.max(0, Number(delay));
+import { transit_realtime } from 'gtfs-realtime-bindings';
+
+const buffer = await streamToBuffer(obj.Body as any);
+const feed = transit_realtime.FeedMessage.decode(buffer);
 ```
 
-この設計の意図:
+これがBIN→構造化オブジェクト化の中核です。
 
-- 「空いていて早着」を混雑の低さと同義にしない
-- 混雑指標を遅延寄りの単調指標にする
+## 3. 取り出すロジック
 
-## 3. stop_idでどこを見ているか
+```ts
+feed.entity.forEach((entity: any) => {
+  if (!entity.tripUpdate) return;
+  const tripUpdate = entity.tripUpdate;
 
-`stop_id` は「どの停留所の遅延か」を示します。
+  tripUpdate.stopTimeUpdate?.forEach((stu: any) => {
+    const stopId = stu.stopId;
+    const delay = stu.arrival?.delay ?? stu.departure?.delay ?? null;
+    if (!stopId || delay === null || delay === undefined) return;
 
-本プロジェクトでは、全停留所ではなく `spots.csv` に登録した対象停留所だけを集計しています。
+    const delaySec = Math.max(0, Number(delay));
+    // ...
+  });
+});
+```
 
-- キー: `(company, stop_id)`
-- 目的: モール単位の混雑を計算する
+重要点:
 
-## 4. サンプル検証結果（2026-02-12）
+- `tripUpdate` がない entity は無視
+- `stopId` と `delay` が揃わないレコードは無視
+- 負値は0に丸める
 
-`/Users/nakamurashinnosuke/Documents/GitHub/agyancast/samples/gtfs_rt/20260212_234336/summary.json` では、次を確認済みです。
+## 4. JSONLへの落とし込み（Bronze）
 
-- 全4社で `stop_id` と `delay` を取得できた
-- `spots.csv` と一致する `stop_id` が全社で存在した
+抽出後、イベント単位に整形してJSONLで保存します。
 
-これは「MVPの入力要件が満たされた」ことを意味します。
+実際のサンプル（抜粋）:
 
-## 5. timestampは何に使うか
+- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/samples/daily_delay/bronze/dt=2026-02-14/hour=09/part-2026-02-14-0900.jsonl`
 
-同じ遅延でも、古い値だと現況を誤認します。
+```json
+{"event_time":"2026-02-14T00:00:15.000Z","ingest_time":"2026-02-14T00:00:33.268Z","company":"kumabus","feed_type":"trip_update","trip_id":"2_388_20260109","route_id":"1_1313_2_20260109","stop_id":"100002_1","stop_sequence":1,"delay_sec":14}
+```
 
-そのため実装では、次の優先順でイベント時刻を決めています。
+この形にする理由:
 
-1. `tripUpdate.timestamp`
-2. `feed.header.timestamp`
-3. 取得時刻（ingest時刻）
+- Athenaで扱いやすい
+- 後続の集計が単純になる
+- JSONとして目視デバッグしやすい
 
-時刻を持つことで、後段で「鮮度判定」や「直近補完」が可能になります。
+## 5. まとめ
 
-## 6. 初学者がつまずきやすい点
+今回の変換は次の2段構えです。
 
-- `trip_id` が取れても `stop_time_update` が空のケースがある
-- `arrival.delay` だけ/`departure.delay` だけ存在するケースがある
-- すべての停留所で毎回データが出るとは限らない
+1. Raw: BINをそのまま保存（再処理保険）
+2. Bronze: 必要項目だけJSONL化（実務処理用）
 
-設計上は「欠損を前提にする」ことが重要です。
+これにより、仕様理解が進んだ時に変換ロジックをやり直せます。

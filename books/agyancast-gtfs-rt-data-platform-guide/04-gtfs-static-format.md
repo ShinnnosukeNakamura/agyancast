@@ -1,62 +1,16 @@
 ---
-title: "GTFS静的フォーマット詳細: ファイル同士のつながり"
+title: "GTFS static詳細: どのファイルのどの列を使うか"
 ---
 
-この章では、仕様の用語だけでなく、実ファイルを見ながら理解します。
+この章では、`agyancast` の実データに沿って static フォーマットを具体化します。
 
-参照するファイル:
+参照:
 
 - `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/GTFS/kumabus/stops.txt`
 - `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/GTFS/kumabus/trips.txt`
 - `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/GTFS/kumabus/stop_times.txt`
 
-## 1. stops.txt（停留所マスタ）
-
-`stops.txt` には、停留所ID・名称・緯度経度が入ります。
-
-```csv
-"stop_id","stop_name","stop_lat","stop_lon"
-"100002_1","桜町バスターミナル","32.800438","130.70398"
-```
-
-ポイント:
-
-- `stop_id` は他ファイルから参照される重要キー
-- 表示名は `stop_name`
-- 地図表示には `stop_lat` / `stop_lon`
-
-## 2. trips.txt（便の定義）
-
-`trips.txt` は「どの路線の、どの便か」を表します。
-
-```csv
-"route_id","service_id","trip_id","trip_headsign"
-"1_1313_2_20260109","1_1_20260109","1_1118_20260109","通潤山荘"
-```
-
-ポイント:
-
-- `trip_id` は1運行単位のキー
-- `route_id` で路線に紐づく
-- `service_id` で運行日パターンに紐づく
-
-## 3. stop_times.txt（便の時系列）
-
-`stop_times.txt` は、tripごとの停車順と時刻を持ちます。
-
-```csv
-"trip_id","arrival_time","departure_time","stop_id","stop_sequence"
-"11_1_20260109","06:28:00","06:28:00","100002_1","1"
-"11_1_20260109","06:31:00","06:31:00","100005_2","2"
-```
-
-ポイント:
-
-- `trip_id` + `stop_sequence` で、便の中の1点が定まる
-- `stop_id` が `stops.txt` に接続する
-- 予定時刻との差分を考えるときの基準になる
-
-## 4. ファイル関係を図で整理
+## 1. ファイル関係
 
 ```mermaid
 flowchart LR
@@ -65,23 +19,67 @@ flowchart LR
   S["stops.txt\nstop_id"] --> ST
 ```
 
-## 5. Required / Conditionally Required の考え方
-
-GTFS仕様では「必須」「条件付き必須」が明確です。
+## 2. stops.txt
 
 例:
 
-- `calendar.txt` は、すべてを `calendar_dates.txt` で表現しない限り必要
-- `calendar_dates.txt` は `calendar.txt` を省略するなら全運行日を持つ必要
+```csv
+"stop_id","stop_name","stop_lat","stop_lon"
+"100002_1","桜町バスターミナル","32.800438","130.70398"
+```
 
-このあたりは仕様に厳密に従うと、後でパーサ実装が安定します。
+今回の用途:
 
-## 6. このプロジェクトでの実務上の使い方
+- `stop_id`: GTFS-RTとの突合キー
+- `stop_name`: UI表示名
+- `stop_lat`, `stop_lon`: 地図描画
 
-`agyancast` では最初のMVP段階で、静的GTFSは次に絞って利用しています。
+## 3. trips.txt
 
-- `stop_id` の意味づけ（どの停留所か）
-- `trip_id` / `route_id` の補助情報
-- モール停留所定義 `spots.csv` の整備
+例:
 
-次章で、リアルタイム版のGTFS-RTに進みます。
+```csv
+"route_id","service_id","trip_id","trip_headsign"
+"1_1313_2_20260109","1_1_20260109","1_1118_20260109","通潤山荘"
+```
+
+今回の用途:
+
+- `trip_id`: GTFS-RT TripUpdateの文脈解釈
+- `route_id`: 空港系・通勤系などのルート判定に利用
+
+## 4. stop_times.txt
+
+例:
+
+```csv
+"trip_id","arrival_time","departure_time","stop_id","stop_sequence"
+"11_1_20260109","06:28:00","06:28:00","100002_1","1"
+```
+
+今回の用途:
+
+- 区間移動時間の理論値確認
+- `stop_sequence` の順序整合
+- 将来の区間所要時間指標化の土台
+
+## 5. 実装上はspots.csvを間に挟む
+
+本プロジェクトは「モール単位可視化」が目的なので、全停留所をそのまま集計しません。
+
+`spots.csv` で、対象停留所を明示的に絞ります。
+
+- 参照: `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/spots.csv`
+- キー: `(company, stop_id)`
+
+この1段を入れることで、仕様理解とプロダクト要件が接続されます。
+
+## 6. static側で今回使っていないもの
+
+MVPでは次は未使用または最小利用です。
+
+- fare関連
+- shapesの詳細利用
+- calendarの高度な例外処理
+
+ただし将来予測では再利用可能なので、データ自体は保持します。

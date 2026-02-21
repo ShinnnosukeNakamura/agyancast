@@ -1,78 +1,70 @@
 ---
-title: "変換処理を読む: transform.tsの実装解説"
+title: "transform.ts徹底解説: 判定ロジックと補完"
 ---
 
-この章では、`transform.ts` の処理を上から追います。
-
-対象ファイル:
+対象コード:
 
 - `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lambda/transform.ts`
 
-## 1. 会社ごとの最新TripUpdateを読む
+## 1. 最新TripUpdateを会社ごとに選ぶ
 
-処理の流れは次です。
+`listLatestTripUpdate()` で、S3 Rawから各社の最新 `trip_update.bin` を選びます。
 
-1. 対象会社一覧を作る
-2. 会社ごとに最新 `trip_update.bin` を取得
-3. `FeedMessage.decode(buffer)` でprotobufをデコード
+ポイント:
 
-```ts
-const feed = transit_realtime.FeedMessage.decode(buffer);
-```
+- 当日 + 前日を候補に探索
+- `dt/hour/minute` をキーとして最新を選択
 
-## 2. stop_time_updateから遅延を抽出
+## 2. イベント時刻の優先順位
+
+`event_time` は次の順で決定しています。
+
+1. `tripUpdate.timestamp`
+2. `feed.header.timestamp`
+3. ingest時刻
+
+これで「取得遅延」と「観測時刻」を分離できます。
+
+## 3. 遅延抽出
 
 ```ts
 const delay = stu.arrival?.delay ?? stu.departure?.delay ?? null;
+const delaySec = Math.max(0, Number(delay));
 ```
 
-- `stopId` がないデータはスキップ
-- `delay` がないデータもスキップ
-- 数値化して0未満を切り上げ
+この値を `(company, stop_id)` で `delayByStop` に保持します。
 
-## 3. 遅延のステータス化
+## 4. モール単位集約
 
-```ts
-if (delaySec < 300) return 'low';
-if (delaySec < 600) return 'medium';
-if (delaySec < 1800) return 'high';
-return 'very_high';
-```
+`spots.csv` を読んで、モールごとに対象停留所を引き、遅延配列を作ります。
 
-しきい値は5分/10分/30分です。
+- 統計量: `median(delays)`
+- ステータス変換:
+  - `<300`: low
+  - `<600`: medium
+  - `<1800`: high
+  - `>=1800`: very_high
 
-## 4. モール単位への集約
+## 5. 欠損補完
 
-- `spots.csv` を読み込む
-- `(company, stop_id)` で突合
-- 遅延配列を集めて中央値を取る
+`last_stop_delay.json` に前回観測値を保持し、欠損時に利用します。
 
-中央値採用の理由:
+- 有効期限: `FILL_MAX_AGE_MINUTES`（既定180分）
+- 期限超過値は補完に使わない
 
-- 外れ値に強い
-- 単純平均より「体感」に寄りやすい
+これで一時欠損による `unknown` 乱発を抑えます。
 
-## 5. 欠損補完（3時間）
+## 6. 派生データ
 
-各停留所の直近値を `last_stop_delay.json` に保持し、欠損時に使います。
+同じ変換処理内で次も作成しています。
 
-- 補完キー: `(company, stop_id)`
-- 有効期限: 3時間
+- 来訪（空港）向け最新遅延
+- 通勤（セミコン周辺）向け遅延/区間速度
 
-これにより、1回の欠損で画面が全部 `unknown` になるのを避けています。
+つまり「1つの入力から複数体験に分岐」する実装です。
 
-## 6. 生成される成果物
+## 7. Bronze書き出し
 
-- `latest.json`
-- `latest_detail.json`
-- `visitor/airport_latest.json`
-- `commute/semicon_latest.json`
-- Bronzeイベントログ
+最後に `bronze/dt=.../hour=.../part-....jsonl` を出力します。
 
-1つのLambdaが「変換＋配信用JSON生成」まで担う構成です。
-
-## 7. 改善ポイント（次フェーズ）
-
-- 複数便の重みづけ（同一路線偏り対策）
-- 時刻帯別の基準線（平日/休日差）
-- 早着（負値）を扱う別指標の検討
+これが後段のdaily mart集計入力になります。

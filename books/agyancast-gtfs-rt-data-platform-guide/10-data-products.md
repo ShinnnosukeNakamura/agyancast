@@ -1,49 +1,79 @@
 ---
-title: "配信データとフロント: latest.jsonとdaily_delay.json"
+title: "配信データ詳細: 画面でどう使うか"
 ---
 
-この章では、バックエンド成果物がフロントでどう使われるかを整理します。
+## 1. 最新ステータス
 
-## 1. フロントが読む主なJSON
+例:
 
-- `latest.json`: モール別ステータス
-- `latest_detail.json`: 遅延秒、サンプル数、補完数
-- `daily_delay.json`: 当日の時間推移
-- `places.json`: 地図表示用地点情報
+- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/web/public/data/latest.json`
 
-## 2. 役割分担
+構造:
 
-- バックエンド: 生データから意味あるJSONを作る
-- フロント: そのJSONを見せ方に変換する
+```json
+{
+  "updated_at": "2026-02-14T22:29:17+0900",
+  "statuses": {
+    "イオンモール熊本": "high"
+  }
+}
+```
 
-この分離で、UI変更のたびにデータ処理を触らずに済みます。
+用途:
 
-## 3. daily_delay.jsonの考え方
+- 地図ピン色
+- 一覧の状態表示
 
-`daily_delay.json` は「時系列グラフ専用」の配信形式です。
+## 2. 日次推移
+
+例:
+
+- `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/web/public/data/daily_delay.json`
+
+構造の要点:
 
 - `hours`: 00〜23
-- `series`: モール名ごとの遅延分配列
+- `series[モール名]`: 分単位遅延配列
+- 欠損時は `null`
 
-重要な設計:
+用途:
 
-- 欠損は `null`
-- 0と`null`を区別（データなしを明確化）
+- グラフ表示
+- 時間帯比較
 
-## 4. 生活シーン別UI
+## 3. Parquetマート
 
-同じ基盤から、次の体験を分岐しています。
+保存先:
 
-- 買物: どこに行くかの判断
-- 通勤: いつもよりしんどいか
-- 来訪: 間に合うかのリスク
+- `silver/mart/daily_delay/dt=YYYY-MM-DD/part-YYYY-MM-DD.parquet`
 
-同じデータでも、言語化を変えると意思決定に使いやすくなります。
+主列:
 
-## 5. 初学者向け実装メモ
+- `hour`
+- `mall_name`
+- `median_delay_sec`
+- `sample_count`
+- `generated_at`
 
-- APIを増やす前に、まずJSONファイル運用で十分
-- キャッシュ更新タイミングを10分単位で明確にする
-- 画面側は「更新時刻（updated_at）」を必ず表示する
+用途:
 
-これだけで「古いデータを見せてしまう事故」を減らせます。
+- Athena分析
+- 将来予測の学習素材
+
+## 4. なぜJSONとParquetを両方持つか
+
+- JSON: フロントがそのまま読める
+- Parquet: 分析と再利用に向く
+
+この二層化で、配信速度と分析性を両立します。
+
+## 5. 生活シーン別データ
+
+`transform.ts` / `daily_delay_mart` で次の派生JSONも出しています。
+
+- `visitor_airport_latest.json`
+- `visitor_airport_daily.json`
+- `commute_semicon_latest.json`
+- `commute_semicon_daily.json`
+
+同じ基盤から、行動文脈に合わせたUIを作るためのデータです。

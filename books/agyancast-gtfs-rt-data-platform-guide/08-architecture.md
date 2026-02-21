@@ -1,70 +1,55 @@
 ---
-title: "アーキテクチャ: Raw/Bronze/Silverの分け方"
+title: "アーキテクチャ詳細: Raw/Bronze/Silver"
 ---
 
-この章では、データレイヤー設計を説明します。
-
-## 全体像
+## 全体フロー
 
 ```mermaid
 flowchart TD
-  A["GTFS-RT (.bin)"] --> B["Raw S3\n元データ保存"]
-  B --> C["Transform Lambda"]
-  C --> D["Bronze JSONL\nイベントログ"]
-  C --> E["Silver latest.json\n最新スナップショット"]
-  D --> F["daily_delay_mart\n日次集計"]
-  F --> G["Silver mart Parquet"]
-  E --> H["Web data/latest.json"]
-  G --> I["Web data/daily_delay.json"]
-  G --> J["Athena分析"]
+  A["GTFS-RT feeds\n*.bin"] --> B["Ingest Lambda"]
+  B --> C["S3 Raw"]
+  C --> D["Transform Lambda"]
+  D --> E["S3 Bronze JSONL"]
+  D --> F["S3 Silver latest JSON"]
+  E --> G["Daily Mart Lambda"]
+  G --> H["S3 Silver mart Parquet"]
+  F --> I["Web data/latest.json"]
+  G --> J["Web data/daily_delay.json"]
 ```
 
-## 1. Raw: 不変の事実を残す層
+## 1. Ingest（収集）
 
-- 取得した `.bin` をそのまま保存
-- 後から再パースできる
-- 「変換ミス時に復旧できる保険」
+- 役割: 外部フィード取得とRaw保存
+- 実装: `infra/lambda/ingest.ts`
+- 重要: ここでは変換しない
 
-保存例:
+## 2. Transform（変換）
 
-```text
-s3://<bucket>/raw/company=.../dt=YYYY-MM-DD/hour=HH/minute=MM/*.bin
-```
+- 役割: BINデコード、遅延抽出、ステータス化
+- 実装: `infra/lambda/transform.ts`
+- 出力:
+  - Bronze JSONL
+  - Silver latest系JSON
+  - Web向け最新JSON
 
-## 2. Bronze: 構造化イベントログ
+## 3. Daily mart（集計）
 
-- 1イベント1レコードのJSONL
-- 重複は許容
-- まずは壊れにくさを優先
+- 役割: 日次時系列の作成
+- 実装: `infra/lambda_py/daily_delay_mart/handler.py`
+- 出力:
+  - `silver/mart/daily_delay/dt=.../*.parquet`
+  - `web/data/daily_delay.json`
 
-保存例:
+## 4. スケジュール
 
-```text
-s3://<bucket>/bronze/dt=YYYY-MM-DD/hour=HH/part-*.jsonl
-```
+CDKではEventBridgeで10分おき実行（JST 05:00〜23:50）です。
 
-## 3. Silver: 使うための形
+- 参照: `/Users/nakamurashinnosuke/Documents/GitHub/agyancast/infra/lib/agyancast-data-stack.ts`
 
-`latest.json` はUI即応用、`mart` は分析用です。
+## 5. この構成にした理由
 
-- `latest.json`: 今の状態
-- `latest_detail.json`: 詳細（サンプル数、補完数など）
-- `daily_delay` Parquet: 時系列集計
+- 変換ミスしてもRawから再処理できる
+- 画面向けと分析向けを分離できる
+- 段階的に機能追加しやすい
 
-## 4. なぜ分けるか
-
-1つのテーブルに全部押し込むと、変更時の影響が大きくなります。
-
-レイヤー分離により、次が可能になります。
-
-- 取り込みロジック変更とUI変更を独立
-- 解析ロジックの改善を後から適用
-- 保存コストとクエリコストの最適化
-
-## 5. この設計で重要な判断
-
-- イベント時刻はGTFS-RT timestamp優先
-- JSTで集計パーティションを切る
-- 欠損を許容し、補完ルールを明示する
-
-これで「綺麗なデータしか扱えない」設計を避けています。
+MVPとしては、複雑性と保守性のバランスが取りやすい構成です。
