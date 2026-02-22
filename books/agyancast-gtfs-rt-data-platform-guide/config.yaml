@@ -1,13 +1,13 @@
-title: "GTFS-RTで作る地域混雑可視化入門"
-summary: "agyancastで実際に作ったデータ基盤を題材に、GTFS/GTFS-RTのフォーマット理解からBINデータ処理、混雑可視化MVPの設計判断までを詳しく解説します。"
-topics: ["gtfs", "gtfs-rt", "aws", "dataplatform", "opendata"]
+title: "GTFS-RT入門: 遅延データをためて地域の混雑を見える化する"
+summary: "熊本のオープンデータ（GTFS/GTFS-RT）を題材に、GTFS-RT（protobuf）の読み方から、AWS（S3/Lambda）で収集→保存→変換→配信する最小構成を `agyancast` の実装で追います。まずは履歴をためて再処理できる土台を作るところまで。"
+topics: ["gtfs", "gtfs-rt", "aws", "lambda", "s3"]
 published: false
 price: 0
 toc_depth: 2
 chapters:
   - 00-readme
   - 01-problem
-  - 02-setup-zenn
+  - 02-design-principles
   - 03-gtfs-overview
   - 04-gtfs-static-format
   - 05-gtfs-realtime-overview
