@@ -73,22 +73,22 @@ a {
 
 .weather-hero {
   position: relative;
-  border-radius: 18px;
-  padding: 11px 13px;
+  border-radius: 14px;
+  padding: 8px 10px;
   background: linear-gradient(145deg, #2979d5 0%, #4f99ec 48%, #7db4f4 100%);
-  box-shadow: 0 14px 24px rgba(16, 57, 112, 0.2);
+  box-shadow: 0 10px 18px rgba(16, 57, 112, 0.18);
   color: #fff;
   overflow: hidden;
   animation: float-up 0.45s ease both;
 }
 
-.weather-hero::before {
+.weather-hero.compact::before {
   content: "";
   position: absolute;
-  width: 170px;
-  height: 170px;
-  top: -95px;
-  right: -45px;
+  width: 120px;
+  height: 120px;
+  top: -70px;
+  right: -38px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 72%);
 }
@@ -102,32 +102,20 @@ a {
   gap: 10px;
 }
 
-.header-title {
-  display: flex;
-  align-items: baseline;
+.hero-top.compact {
+  align-items: center;
   gap: 8px;
 }
 
-.header-city {
-  font-family: "Shippori Mincho", serif;
-  font-size: clamp(24px, 4.2vw, 32px);
-  letter-spacing: 0.03em;
-  font-weight: 700;
-}
-
-.header-sub {
-  font-size: clamp(14px, 2.5vw, 21px);
-  font-weight: 800;
-  letter-spacing: 0.02em;
-}
-
-.hero-caption {
+.header-title.single-line {
   position: relative;
   z-index: 1;
-  margin-top: 6px;
-  font-size: 12px;
-  opacity: 0.86;
-  font-weight: 600;
+  font-size: clamp(16px, 3.8vw, 20px);
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .hero-time-card {
@@ -143,6 +131,15 @@ a {
   border: 1px solid rgba(255, 255, 255, 0.24);
 }
 
+.hero-time-card.compact {
+  flex-shrink: 0;
+  border-radius: 999px;
+  flex-direction: row;
+  gap: 6px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
 .meta-label {
   font-size: 10px;
   opacity: 0.78;
@@ -150,7 +147,7 @@ a {
 }
 
 .meta-value {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
 }
 
@@ -310,27 +307,20 @@ a {
   opacity: 0.6;
 }
 
-.base-chip-row {
+.base-select {
   margin-top: 8px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.base-chip {
+  width: 100%;
   border: 1px solid rgba(153, 178, 206, 0.58);
-  border-radius: 999px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.88);
   color: #365877;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 8px 10px;
 }
 
-.base-chip.active {
-  border-color: rgba(43, 118, 197, 0.52);
-  background: rgba(63, 131, 206, 0.16);
-  color: #1f4f81;
+.base-select:disabled {
+  opacity: 0.6;
 }
 
 .base-note {
@@ -447,27 +437,28 @@ a {
   color: #5e7389;
 }
 
-.sort-tabs {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+.sort-compact {
   margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.sort-btn {
+.sort-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: #446584;
+}
+
+.sort-select {
+  min-width: 138px;
   border: 1px solid rgba(149, 176, 208, 0.5);
-  border-radius: 999px;
+  border-radius: 10px;
   background: rgba(246, 251, 255, 0.9);
   color: #4c6784;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
-  padding: 7px 11px;
-}
-
-.sort-btn.active {
-  color: #1f4f81;
-  border-color: rgba(58, 127, 206, 0.55);
-  background: rgba(60, 131, 208, 0.16);
+  padding: 7px 10px;
 }
 
 .list-panel {
@@ -654,6 +645,10 @@ a {
   gap: 8px;
 }
 
+.visitor-kpi-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .visitor-kpi {
   border-radius: 12px;
   padding: 10px;
@@ -784,6 +779,11 @@ a {
   border-bottom: 1px solid rgba(157, 183, 213, 0.35);
 }
 
+.commute-single-row-compact {
+  min-width: 540px;
+  grid-template-columns: 1.8fr repeat(3, minmax(0, 1fr));
+}
+
 .commute-single-row:last-child {
   border-bottom: none;
 }
@@ -814,6 +814,10 @@ a {
 
 .commute-chart-title {
   margin-top: 2px;
+}
+
+.commute-kpi-grid-simple {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .visitor-stop-name {
@@ -1100,19 +1104,16 @@ a {
 
   .weather-hero {
     border-radius: 16px;
-    padding: 10px 11px;
+    padding: 7px 9px;
   }
 
-  .header-city {
-    font-size: 24px;
+  .header-title.single-line {
+    font-size: 15px;
   }
 
-  .header-sub {
-    font-size: 14px;
-  }
-
-  .decision-strip {
-    grid-template-columns: 1fr;
+  .hero-time-card.compact {
+    padding: 3px 7px;
+    gap: 5px;
   }
 
   .hero-actions {
@@ -1205,20 +1206,12 @@ a {
     padding-top: 10px;
   }
 
-  .header-city {
-    font-size: 22px;
-  }
-
-  .hero-caption {
-    font-size: 11px;
+  .header-title.single-line {
+    font-size: 14px;
   }
 
   .meta-value {
-    font-size: 11px;
-  }
-
-  .decision-value {
-    font-size: 15px;
+    font-size: 10px;
   }
 
   .base-note {

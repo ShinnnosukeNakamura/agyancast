@@ -601,6 +601,15 @@ const extractVisitorDailySeries = (daily) => {
   return null;
 };
 
+const extractDirectionMedianSeries = (hours, stops) => {
+  if (!Array.isArray(hours) || !Array.isArray(stops)) return null;
+  return hours.map((_, idx) => {
+    const values = stops.map((stop) => (Array.isArray(stop.delay_min) ? stop.delay_min[idx] : null));
+    const median = medianFinite(values);
+    return median === null ? null : Number(median.toFixed(1));
+  });
+};
+
 const getVisitorDelayStatus = (delaySec) => {
   const value = Number(delaySec);
   if (!Number.isFinite(value)) return "unknown";
@@ -801,25 +810,33 @@ const normalizeCommuteDaily = (raw) => {
   };
 };
 
-const extractCommutePointSeries = (points, valueKey) => {
-  if (!Array.isArray(points) || points.length === 0) return null;
-  const valid = points
-    .filter((point) => {
+const buildPointChartDataByHour = (points, hours, valueKey) => {
+  const labels = buildHourLabels(5, 24);
+  const valueMap = new Map();
+  const pointMap = new Map();
+
+  if (Array.isArray(points)) {
+    points.forEach((point) => {
       const hour = normalizeHourKey(point?.hour);
       const value = Number(point?.[valueKey]);
-      return Boolean(hour) && Number.isFinite(value);
-    })
-    .map((point) => ({
-      ...point,
-      hour: normalizeHourKey(point.hour),
-      [valueKey]: Number(Number(point[valueKey]).toFixed(1)),
-    }))
-    .sort((a, b) => a.hour.localeCompare(b.hour));
-  if (!valid.length) return null;
+      if (!hour || !Number.isFinite(value)) return;
+      valueMap.set(hour, Number(value.toFixed(1)));
+      pointMap.set(hour, point);
+    });
+  }
+
+  if (Array.isArray(hours) && Array.isArray(points) && points.length === 0) {
+    return {
+      labels,
+      values: labels.map(() => null),
+      pointMap,
+    };
+  }
+
   return {
-    labels: valid.map((point) => point.hour),
-    data: valid.map((point) => point[valueKey]),
-    points: valid,
+    labels,
+    values: labels.map((label) => (label === "24" ? null : valueMap.get(label) ?? null)),
+    pointMap,
   };
 };
 
@@ -1159,19 +1176,22 @@ const MallList = ({
       <span className="panel-chip">予測は準備中</span>
     </div>
 
-    <div className="sort-tabs" role="tablist" aria-label="sort mode">
-      {SORT_MODES.map((mode) => (
-        <button
-          type="button"
-          key={mode.key}
-          className={`sort-btn ${sortMode === mode.key ? "active" : ""}`}
-          onClick={() => onSortModeChange(mode.key)}
-          role="tab"
-          aria-selected={sortMode === mode.key}
-        >
-          {mode.label}
-        </button>
-      ))}
+    <div className="sort-compact">
+      <label className="sort-label" htmlFor="sort-mode-select">
+        並び順
+      </label>
+      <select
+        id="sort-mode-select"
+        className="sort-select"
+        value={sortMode}
+        onChange={(event) => onSortModeChange(event.target.value)}
+      >
+        {SORT_MODES.map((mode) => (
+          <option value={mode.key} key={mode.key}>
+            {mode.label}
+          </option>
+        ))}
+      </select>
     </div>
 
     <div className="list-table">
@@ -1419,41 +1439,22 @@ const CommuteDashboard = ({ latest, daily }) => {
   const speedCanvasRef = useRef(null);
   const latestNormalized = useMemo(() => normalizeCommuteLatest(latest), [latest]);
   const dailyNormalized = useMemo(() => normalizeCommuteDaily(daily), [daily]);
-  const delayPointSeries = useMemo(
-    () => extractCommutePointSeries(dailyNormalized.delay_points, "delay_min"),
-    [dailyNormalized.delay_points]
-  );
-  const speedPointSeries = useMemo(
-    () => extractCommutePointSeries(dailyNormalized.traffic?.speed_points, "avg_speed_kmh"),
-    [dailyNormalized.traffic]
-  );
 
-  const currentDelaySec = useMemo(
-    () => {
-      const fromStops = medianFinite((latestNormalized.stops ?? []).map((stop) => stop.delay_sec));
-      if (fromStops !== null) return fromStops;
-      if (Array.isArray(dailyNormalized.delay_points) && dailyNormalized.delay_points.length > 0) {
-        const latestPoint = [...dailyNormalized.delay_points].sort((a, b) => a.hour.localeCompare(b.hour)).at(-1);
-        const delayMin = Number(latestPoint?.delay_min);
-        if (Number.isFinite(delayMin)) return delayMin * 60;
-      }
-      return null;
-    },
-    [latestNormalized, dailyNormalized.delay_points]
-  );
-  const h1DelaySec = useMemo(
-    () => medianFinite((latestNormalized.stops ?? []).map((stop) => stop?.predictions?.h1_sec)),
-    [latestNormalized]
-  );
-  const h3DelaySec = useMemo(
-    () => medianFinite((latestNormalized.stops ?? []).map((stop) => stop?.predictions?.h3_sec)),
-    [latestNormalized]
-  );
+  const currentDelaySec = useMemo(() => {
+    const fromStops = medianFinite((latestNormalized.stops ?? []).map((stop) => stop.delay_sec));
+    if (fromStops !== null) return fromStops;
+    if (Array.isArray(dailyNormalized.delay_points) && dailyNormalized.delay_points.length > 0) {
+      const latestPoint = [...dailyNormalized.delay_points].sort((a, b) => a.hour.localeCompare(b.hour)).at(-1);
+      const delayMin = Number(latestPoint?.delay_min);
+      if (Number.isFinite(delayMin)) return delayMin * 60;
+    }
+    return null;
+  }, [latestNormalized, dailyNormalized.delay_points]);
+
   const statusMeta = VISITOR_STATUS_META[getVisitorDelayStatus(currentDelaySec)] || VISITOR_STATUS_META.unknown;
   const trafficMeta =
     COMMUTE_TRAFFIC_META[latestNormalized.traffic?.status] || COMMUTE_TRAFFIC_META.unknown;
   const avgSpeedKmh = latestNormalized.traffic?.avg_speed_kmh ?? null;
-  const trafficSampleCount = latestNormalized.traffic?.sample_count ?? 0;
   const trafficSectionName =
     latestNormalized.traffic?.section_name ||
     dailyNormalized.traffic?.section_name ||
@@ -1465,17 +1466,32 @@ const CommuteDashboard = ({ latest, daily }) => {
     min_samples: 3,
   };
 
+  const delayChartData = useMemo(
+    () => buildPointChartDataByHour(dailyNormalized.delay_points, dailyNormalized.hours, "delay_min"),
+    [dailyNormalized.delay_points, dailyNormalized.hours]
+  );
+
+  const speedChartData = useMemo(
+    () =>
+      buildPointChartDataByHour(
+        dailyNormalized.traffic?.speed_points,
+        dailyNormalized.hours,
+        "avg_speed_kmh"
+      ),
+    [dailyNormalized.traffic, dailyNormalized.hours]
+  );
+
   useEffect(() => {
-    if (!delayCanvasRef.current || !delayPointSeries) return;
+    if (!delayCanvasRef.current) return;
     if (delayChartRef.current) delayChartRef.current.destroy();
     delayChartRef.current = new Chart(delayCanvasRef.current, {
       type: "line",
       data: {
-        labels: delayPointSeries.labels,
+        labels: delayChartData.labels,
         datasets: [
           {
             label: "遅延(分)",
-            data: delayPointSeries.data,
+            data: delayChartData.values,
             borderColor: "#3f86e0",
             backgroundColor: "#3f86e0",
             tension: 0.32,
@@ -1495,7 +1511,8 @@ const CommuteDashboard = ({ latest, daily }) => {
               label: (context) => {
                 const value = context.parsed.y;
                 if (value === null || value === undefined) return "遅延: -";
-                const point = delayPointSeries.points[context.dataIndex];
+                const hour = context.label;
+                const point = delayChartData.pointMap.get(hour);
                 const sampleSuffix =
                   point?.sample_count === null || point?.sample_count === undefined
                     ? ""
@@ -1511,7 +1528,8 @@ const CommuteDashboard = ({ latest, daily }) => {
             beginAtZero: true,
           },
           x: {
-            title: { display: true, text: "時刻" },
+            title: { display: true, text: "時間帯" },
+            ticks: { maxTicksLimit: 12 },
           },
         },
       },
@@ -1520,19 +1538,19 @@ const CommuteDashboard = ({ latest, daily }) => {
     return () => {
       if (delayChartRef.current) delayChartRef.current.destroy();
     };
-  }, [delayPointSeries]);
+  }, [delayChartData]);
 
   useEffect(() => {
-    if (!speedCanvasRef.current || !speedPointSeries) return;
+    if (!speedCanvasRef.current) return;
     if (speedChartRef.current) speedChartRef.current.destroy();
     speedChartRef.current = new Chart(speedCanvasRef.current, {
       type: "line",
       data: {
-        labels: speedPointSeries.labels,
+        labels: speedChartData.labels,
         datasets: [
           {
             label: "平均時速(km/h)",
-            data: speedPointSeries.data,
+            data: speedChartData.values,
             borderColor: "#8f62ef",
             backgroundColor: "#8f62ef",
             tension: 0.32,
@@ -1552,13 +1570,10 @@ const CommuteDashboard = ({ latest, daily }) => {
               label: (context) => {
                 const value = context.parsed.y;
                 if (value === null || value === undefined) return "平均時速: -";
-                const point = speedPointSeries.points[context.dataIndex];
+                const hour = context.label;
+                const point = speedChartData.pointMap.get(hour);
                 const status = COMMUTE_TRAFFIC_META[point?.status] || COMMUTE_TRAFFIC_META.unknown;
-                const sampleSuffix =
-                  point?.sample_count === null || point?.sample_count === undefined
-                    ? ""
-                    : ` / サンプル ${point.sample_count}`;
-                return `平均時速: ${value}km/h / ${status.label}${sampleSuffix}`;
+                return `平均時速: ${value}km/h / ${status.label}`;
               },
             },
           },
@@ -1569,7 +1584,8 @@ const CommuteDashboard = ({ latest, daily }) => {
             beginAtZero: true,
           },
           x: {
-            title: { display: true, text: "時刻" },
+            title: { display: true, text: "時間帯" },
+            ticks: { maxTicksLimit: 12 },
           },
         },
       },
@@ -1578,7 +1594,7 @@ const CommuteDashboard = ({ latest, daily }) => {
     return () => {
       if (speedChartRef.current) speedChartRef.current.destroy();
     };
-  }, [speedPointSeries]);
+  }, [speedChartData]);
 
   return (
     <div className="commute-content">
@@ -1586,7 +1602,7 @@ const CommuteDashboard = ({ latest, daily }) => {
         <div className="panel-header">
           <div>
             <div className="panel-title">{latestNormalized.area_name}</div>
-            <div className="panel-sub">通勤向け / GTFS停留所ベースで遅延集約</div>
+            <div className="panel-sub">通勤向け / セミコンテクノパーク 1拠点表示</div>
           </div>
           <span className="panel-chip">{formatDateTime(latestNormalized.updated_at)}</span>
         </div>
@@ -1598,18 +1614,10 @@ const CommuteDashboard = ({ latest, daily }) => {
           </span>
         </div>
 
-        <div className="visitor-kpi-grid">
+        <div className="visitor-kpi-grid commute-kpi-grid-simple">
           <div className="visitor-kpi">
-            <span className="visitor-kpi-label">現在</span>
+            <span className="visitor-kpi-label">現在遅延</span>
             <strong className="visitor-kpi-value">{formatDelayShort(currentDelaySec)}</strong>
-          </div>
-          <div className="visitor-kpi">
-            <span className="visitor-kpi-label">1時間後</span>
-            <strong className="visitor-kpi-value">{formatDelayShort(h1DelaySec)}</strong>
-          </div>
-          <div className="visitor-kpi">
-            <span className="visitor-kpi-label">3時間後</span>
-            <strong className="visitor-kpi-value">{formatDelayShort(h3DelaySec)}</strong>
           </div>
           <div className="visitor-kpi">
             <span className="visitor-kpi-label">平均時速</span>
@@ -1620,10 +1628,6 @@ const CommuteDashboard = ({ latest, daily }) => {
             <strong className="visitor-kpi-value" style={{ color: trafficMeta.color }}>
               {trafficMeta.label}
             </strong>
-          </div>
-          <div className="visitor-kpi">
-            <span className="visitor-kpi-label">速度サンプル</span>
-            <strong className="visitor-kpi-value">{trafficSampleCount}件</strong>
           </div>
         </div>
 
@@ -1645,54 +1649,40 @@ const CommuteDashboard = ({ latest, daily }) => {
               {dailyNormalized.date || "--"} ({dailyNormalized.timezone || "JST"}) / 05-24時
             </div>
           </div>
-          <span className="panel-chip muted">セミコンテクノパーク 1拠点表示</span>
+          <span className="panel-chip muted">1拠点表示</span>
         </div>
         <div className="commute-single-table">
-          <div className="commute-single-row header">
+          <div className="commute-single-row header commute-single-row-compact">
             <span>拠点</span>
-            <span>現在</span>
-            <span>1時間後</span>
-            <span>3時間後</span>
+            <span>現在遅延</span>
             <span>平均時速</span>
             <span>区間渋滞</span>
-            <span>速度サンプル</span>
           </div>
-          <div className="commute-single-row">
+          <div className="commute-single-row commute-single-row-compact">
             <strong>セミコンテクノパーク</strong>
             <span>{formatDelayShort(currentDelaySec)}</span>
-            <span>{formatDelayShort(h1DelaySec)}</span>
-            <span>{formatDelayShort(h3DelaySec)}</span>
             <span>{formatSpeedKmh(avgSpeedKmh)}</span>
             <span style={{ color: trafficMeta.color }}>{trafficMeta.label}</span>
-            <span>{trafficSampleCount}件</span>
           </div>
         </div>
 
         <div className="commute-charts">
           <div className="commute-chart-card">
-            <div className="panel-sub commute-chart-title">遅延推移（実測のみ）</div>
-            {delayPointSeries ? (
-              <div className="trend-chart commute-trend-chart">
-                <div className="trend-scroll">
-                  <canvas ref={delayCanvasRef} height="200" />
-                </div>
+            <div className="panel-sub commute-chart-title">平均時速推移（実測のみ）</div>
+            <div className="trend-chart commute-trend-chart">
+              <div className="trend-scroll">
+                <canvas ref={speedCanvasRef} height="200" />
               </div>
-            ) : (
-              <div className="visitor-empty">遅延推移データを準備中です。</div>
-            )}
+            </div>
           </div>
 
           <div className="commute-chart-card">
-            <div className="panel-sub commute-chart-title">平均時速推移（実測のみ）</div>
-            {speedPointSeries ? (
-              <div className="trend-chart commute-trend-chart">
-                <div className="trend-scroll">
-                  <canvas ref={speedCanvasRef} height="200" />
-                </div>
+            <div className="panel-sub commute-chart-title">遅延推移（実測のみ）</div>
+            <div className="trend-chart commute-trend-chart">
+              <div className="trend-scroll">
+                <canvas ref={delayCanvasRef} height="200" />
               </div>
-            ) : (
-              <div className="visitor-empty">平均時速データを準備中です。</div>
-            )}
+            </div>
           </div>
         </div>
       </section>
@@ -1706,9 +1696,6 @@ const VisitorDashboard = ({ latest, daily, stopsLatest, stopsDaily }) => {
   const [activeDirection, setActiveDirection] = useState("to_airport");
 
   const meta = VISITOR_STATUS_META[latest.status] || VISITOR_STATUS_META.unknown;
-  const h1 = latest.predictions?.h1_sec;
-  const h3 = latest.predictions?.h3_sec;
-  const dailySeries = extractVisitorDailySeries(daily);
   const stopsLatestNormalized = useMemo(
     () => normalizeVisitorStopsLatest(stopsLatest),
     [stopsLatest]
@@ -1733,20 +1720,38 @@ const VisitorDashboard = ({ latest, daily, stopsLatest, stopsDaily }) => {
     stops: [],
   };
 
+  const directionalSeries = useMemo(
+    () =>
+      extractDirectionMedianSeries(
+        stopsDailyNormalized.hours,
+        Array.isArray(selectedDailyDirection?.stops) ? selectedDailyDirection.stops : []
+      ),
+    [stopsDailyNormalized.hours, selectedDailyDirection]
+  );
+  const fallbackSeries = useMemo(() => extractVisitorDailySeries(daily), [daily]);
+  const chartLabels = useMemo(() => buildHourLabels(5, 24), []);
+  const chartSeries = useMemo(() => {
+    if (Array.isArray(directionalSeries) && directionalSeries.some((value) => value !== null)) {
+      return buildSeriesForHours(chartLabels, stopsDailyNormalized.hours, directionalSeries);
+    }
+    if (Array.isArray(fallbackSeries)) {
+      return buildSeriesForHours(chartLabels, daily?.hours, fallbackSeries);
+    }
+    return null;
+  }, [directionalSeries, fallbackSeries, chartLabels, stopsDailyNormalized.hours, daily]);
+
   useEffect(() => {
-    if (!daily || !canvasRef.current || !Array.isArray(dailySeries)) return;
-    const labels = buildHourLabels(5, 24);
-    const series = buildSeriesForHours(labels, daily.hours, dailySeries);
+    if (!canvasRef.current || !Array.isArray(chartSeries)) return;
 
     if (chartRef.current) chartRef.current.destroy();
     chartRef.current = new Chart(canvasRef.current, {
       type: "line",
       data: {
-        labels,
+        labels: chartLabels,
         datasets: [
           {
-            label: latest.route_name || "阿蘇くまもと空港リムジンバス",
-            data: series,
+            label: `${latest.route_name || "阿蘇くまもと空港リムジンバス"} / ${selectedLatestDirection.label}`,
+            data: chartSeries,
             borderColor: "#3f86e0",
             backgroundColor: "#3f86e0",
             tension: 0.32,
@@ -1787,10 +1792,33 @@ const VisitorDashboard = ({ latest, daily, stopsLatest, stopsDaily }) => {
     return () => {
       if (chartRef.current) chartRef.current.destroy();
     };
-  }, [daily, dailySeries, latest.route_name]);
+  }, [chartLabels, chartSeries, latest.route_name, selectedLatestDirection.label]);
 
   return (
     <div className="visit-content">
+      <section className="panel visitor-direction-panel">
+        <div className="panel-header">
+          <div>
+            <div className="panel-title">運行方向</div>
+            <div className="panel-sub">表示する方向を選択</div>
+          </div>
+        </div>
+        <div className="direction-switch" role="tablist" aria-label="direction switch">
+          {directionOptions.map((option) => (
+            <button
+              type="button"
+              key={option.key}
+              className={`direction-btn ${activeDirection === option.key ? "active" : ""}`}
+              onClick={() => setActiveDirection(option.key)}
+              role="tab"
+              aria-selected={activeDirection === option.key}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </section>
+
       <section className="panel visitor-panel" id="visitor-current-section">
         <div className="panel-header">
           <div>
@@ -1807,18 +1835,10 @@ const VisitorDashboard = ({ latest, daily, stopsLatest, stopsDaily }) => {
           </span>
         </div>
 
-        <div className="visitor-kpi-grid">
+        <div className="visitor-kpi-grid visitor-kpi-single">
           <div className="visitor-kpi">
             <span className="visitor-kpi-label">現在</span>
             <strong className="visitor-kpi-value">{formatDelayShort(latest.delay_sec)}</strong>
-          </div>
-          <div className="visitor-kpi">
-            <span className="visitor-kpi-label">1時間後</span>
-            <strong className="visitor-kpi-value">{formatDelayShort(h1)}</strong>
-          </div>
-          <div className="visitor-kpi">
-            <span className="visitor-kpi-label">3時間後</span>
-            <strong className="visitor-kpi-value">{formatDelayShort(h3)}</strong>
           </div>
         </div>
 
@@ -1833,12 +1853,13 @@ const VisitorDashboard = ({ latest, daily, stopsLatest, stopsDaily }) => {
           <div>
             <div className="panel-title">今日の遅延推移</div>
             <div className="panel-sub">
-              {daily?.date ?? "--"} ({daily?.timezone ?? "JST"}) / 05-24時
+              {stopsDailyNormalized?.date ?? daily?.date ?? "--"} (
+              {stopsDailyNormalized?.timezone ?? daily?.timezone ?? "JST"}) / {selectedLatestDirection.label} / 05-24時
             </div>
           </div>
-          <span className="panel-chip muted">データ蓄積後に精度向上</span>
+          <span className="panel-chip muted">実測データ表示</span>
         </div>
-        {Array.isArray(dailySeries) ? (
+        {Array.isArray(chartSeries) ? (
           <div className="trend-chart">
             <div className="trend-scroll">
               <canvas ref={canvasRef} height="200" />
@@ -1860,21 +1881,7 @@ const VisitorDashboard = ({ latest, daily, stopsLatest, stopsDaily }) => {
           <span className="panel-chip">{formatDateTime(stopsLatestNormalized.updated_at)}</span>
         </div>
         <div className="visitor-stop-overview-note">
-          空港行き・市内行きそれぞれで、停留所ごとの現在遅延と当日推移を表示します。
-        </div>
-        <div className="direction-switch" role="tablist" aria-label="direction switch">
-          {directionOptions.map((option) => (
-            <button
-              type="button"
-              key={option.key}
-              className={`direction-btn ${activeDirection === option.key ? "active" : ""}`}
-              onClick={() => setActiveDirection(option.key)}
-              role="tab"
-              aria-selected={activeDirection === option.key}
-            >
-              {option.label}
-            </button>
-          ))}
+          {selectedLatestDirection.label}の停留所ごとの現在遅延と当日推移を表示します。
         </div>
       </section>
 
@@ -2209,11 +2216,6 @@ const App = () => {
     });
   }, [filteredItems, recommendedItems, sortMode]);
 
-  const crowdedCount = useMemo(() => {
-    return filteredItems.filter((item) => item.statusKey === "high" || item.statusKey === "very_high")
-      .length;
-  }, [filteredItems]);
-
   const recommendedNow = recommendedItems.slice(0, 2);
 
   const bestHourOverall = useMemo(() => {
@@ -2344,8 +2346,8 @@ const App = () => {
       text = `熊本来熊バス情報: ${visitorLatest.route_name} ${meta.label} / 現在遅延 ${formatDelayShort(visitorLatest.delay_sec)} (${formatDateTime(visitorLatest.updated_at)})`;
     } else {
       const current = medianFinite((commuteLatest.stops ?? []).map((stop) => stop.delay_sec));
-      const h1 = medianFinite((commuteLatest.stops ?? []).map((stop) => stop?.predictions?.h1_sec));
-      text = `熊本通勤ナビ: セミコンテクノパーク周辺 / 現在遅延 ${formatDelayShort(current)} / 1時間後 ${formatDelayShort(h1)} (${formatDateTime(commuteLatest.updated_at)})`;
+      const speed = commuteLatest?.traffic?.avg_speed_kmh ?? null;
+      text = `熊本通勤ナビ: セミコンテクノパーク / 現在遅延 ${formatDelayShort(current)} / 平均時速 ${formatSpeedKmh(speed)} (${formatDateTime(commuteLatest.updated_at)})`;
     }
 
     if (navigator.share) {
@@ -2366,19 +2368,10 @@ const App = () => {
       <div className="sky-layer sky-layer-two" />
 
       <div className="app">
-        <header className="weather-hero">
-          <div className="hero-top">
-            <div className="header-title">
-              <span className="header-city">熊本市</span>
-              <span className="header-sub">
-                {activeTab === "shopping"
-                  ? "買物 混雑ナビ"
-                  : activeTab === "commute"
-                    ? "通勤 混雑ナビ"
-                    : "来熊 バス遅延ナビ"}
-              </span>
-            </div>
-            <div className="hero-time-card">
+        <header className="weather-hero compact">
+          <div className="hero-top compact">
+            <div className="header-title single-line">熊本 混雑ナビ agyancast</div>
+            <div className="hero-time-card compact">
               <span className="meta-label">最終更新</span>
               <span className="meta-value">
                 {activeTab === "shopping"
@@ -2388,13 +2381,6 @@ const App = () => {
                     : formatDateTime(visitorLatest.updated_at)}
               </span>
             </div>
-          </div>
-          <div className="hero-caption">
-            {activeTab === "shopping"
-              ? "空いている順に、近くのモールをすばやく比較できます"
-              : activeTab === "commute"
-                ? "セミコンテクノパーク周辺停留所の遅延をまとめて確認できます"
-                : "阿蘇くまもと空港アクセスの遅延を把握できます"}
           </div>
         </header>
 
@@ -2410,27 +2396,6 @@ const App = () => {
 
         {activeTab === "shopping" ? (
           <>
-            <section className="decision-strip" aria-label="recommendation">
-              <div className="decision-card now">
-                <span className="decision-label">今行くなら（{anchorLabel}基準）</span>
-                <strong className="decision-value">
-                  {recommendedNow.length ? recommendedNow[0].displayName : "データ準備中"}
-                </strong>
-                <span className="decision-note">
-                  {recommendedNow[1] ? `次点: ${recommendedNow[1].displayName}` : "候補データ不足"}
-                </span>
-                <span className="decision-trial">※試験表示（参考値）</span>
-              </div>
-              <div className="decision-card time">
-                <span className="decision-label">狙い目時間</span>
-                <strong className="decision-value">{formatHourLabel(bestHourOverall)}</strong>
-                <span className="decision-note">
-                  {crowdedCount > 0 ? `現在混雑スポット ${crowdedCount}件` : "比較的おだやかです"}
-                </span>
-                <span className="decision-trial">※試験表示（参考値）</span>
-              </div>
-            </section>
-
             <section className="hero-actions living" aria-label="shopping actions">
               <button
                 type="button"
@@ -2464,21 +2429,18 @@ const App = () => {
                   {locationState === "loading" ? "現在地を取得中..." : "現在地を使う"}
                 </button>
               </div>
-              <div className="base-chip-row">
-                {places.map((place) => {
-                  const isActive = !useCurrentLocation && selectedBaseId === place.id;
-                  return (
-                    <button
-                      type="button"
-                      key={place.id}
-                      className={`base-chip ${isActive ? "active" : ""}`}
-                      onClick={() => selectBaseMall(place.id)}
-                    >
-                      {NAME_OVERRIDES[place.name] || place.name}
-                    </button>
-                  );
-                })}
-              </div>
+              <select
+                className="base-select"
+                value={selectedBaseId ?? ""}
+                onChange={(event) => selectBaseMall(event.target.value)}
+                disabled={useCurrentLocation}
+              >
+                {places.map((place) => (
+                  <option value={place.id} key={place.id}>
+                    {NAME_OVERRIDES[place.name] || place.name}
+                  </option>
+                ))}
+              </select>
               <div className="base-note">{locationHint}</div>
               {locationFeedback ? <div className="base-feedback">{locationFeedback}</div> : null}
             </section>
