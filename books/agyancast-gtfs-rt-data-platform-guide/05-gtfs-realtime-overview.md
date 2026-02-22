@@ -2,7 +2,7 @@
 title: "GTFS-RT詳細: BINの中身はどうなっているか"
 ---
 
-この章では、`*.bin` を「なんとなくの黒箱」にせず、**中身の階層（どこに delay がいるのか）**を押さえます。
+この章では、`*.bin` を「なんとなくの黒箱」にせず、**中身の階層（delay がどこに入っているか）**を押さえます。
 
 ここを理解すると、次章の「BIN→JSONL（イベントログ）」がスムーズになります。
 
@@ -77,6 +77,8 @@ TripUpdateは「便（trip）が、いまどの停留所でどれくらいズレ
 遅延（delay）は、TripUpdate直下ではなく `stopTimeUpdate[]` の中に入っています。
 つまり実装としては次の形になります。
 
+（注）proto上のフィールド名は `stop_time_update` ですが、ライブラリによっては `stopTimeUpdate` のように見えることがあります。
+
 ```text
 feed.entity[]
   -> entity.trip_update
@@ -95,6 +97,16 @@ feed.entity[]
 
 もちろん“早着”の情報が無価値という意味ではありません。
 将来のフェーズで必要になったときに解釈を変えられるよう、Raw（変換前のBIN）を残しています。
+
+### ベストプラクティス補足: delay を使わない（使えない）ケースもある
+
+GTFS-RTのベストプラクティスでは、次のような注意があります。
+
+- 頻度ベースの便（GTFS `frequencies.txt` で `exact_times=0`）は固定スケジュールに従わないので、`StopTimeEvent` に `delay` を入れず `time` を指定するのが推奨
+- `StopTimeEvent` に `delay` だけを書いて `time` を省略する場合、static GTFS の `stop_times.txt` に対応する予定時刻がないと `delay` の意味が成立しない
+
+`agyancast` が使っているデータ（熊本のBus-Vision由来）は `delay` が入ってくる前提で組んでいるので、MVPでは `delay` をそのまま使っています。
+もし `time` しか入ってこない地域のGTFS-RTを扱う場合は、`time` を保存するか、staticの予定時刻と突き合わせて `delay` を計算する必要があります。
 
 ## 5. 他メッセージの扱い
 

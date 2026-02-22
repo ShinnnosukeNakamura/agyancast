@@ -86,7 +86,7 @@ flowchart LR
 - `TripUpdate.stopTimeUpdate[].departure.delay`
 - `TripUpdate.timestamp`
 
-## ここでの実務上のポイント
+## 実務上のポイント
 
 今回のMVPは「使うフィールドを狭く固定」したのが効きました。
 

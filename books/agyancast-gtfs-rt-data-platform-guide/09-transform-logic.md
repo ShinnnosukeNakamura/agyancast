@@ -117,7 +117,7 @@ const delaySec = Math.max(0, Number(delay));
 派生データを増やしても、RawとBronzeが整っていれば“作り直し”ができます。
 これが土台を先に作る価値です。
 
-## 9. どこを直すと挙動が変わるか（読み替え表）
+## 9. どこを直すと挙動が変わるか
 
 - しきい値（low/medium/high/very_high）を変えたい: `statusFromDelay`
 - 欠損補完の期限を変えたい: `FILL_MAX_AGE_MINUTES`

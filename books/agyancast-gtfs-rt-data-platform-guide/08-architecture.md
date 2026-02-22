@@ -9,7 +9,7 @@ title: "アーキテクチャ: 収集→保存→変換→配信"
 2. S3に何をどう置くか（Raw/Bronze/Silver）
 3. Web配信と分析をどう分けるか
 
-## 全体フロー（まず俯瞰）
+## 全体フロー
 
 ```mermaid
 flowchart TD
